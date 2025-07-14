@@ -13,6 +13,7 @@ import {
 import { usePositions } from "./hooks/usePositions";
 import { NETWORKS } from "./services/fetcher";
 import { validateAndResolveAddress } from "./data/data";
+import Footer from "./components/Footer";
 
 const getTimeFilteredPositions = (
   positions: Position[],
@@ -245,8 +246,8 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-8 sm:py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col">
+      <div className="flex-1 max-w-7xl mx-auto px-4 py-4 sm:px-8 sm:py-8 w-full">
         <Header
           {...stats}
           currentAddress={evmAddress || ""}
@@ -366,6 +367,8 @@ function App() {
 
         {activeTab === "pools" && <PoolSearch pools={mockPools} />}
       </div>
+
+      <Footer />
     </div>
   );
 }
