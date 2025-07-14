@@ -59,7 +59,7 @@ export interface Network extends Chain {
   name: string;
   desc: string;
   logoURI: string;
-  subgraphEndpoint: string;
+  subgraphEndpoint: string[];
   nonfungiblePositionManagerAddress: string;
   factory: string; // Uniswap V3 Factory address
 
@@ -78,7 +78,10 @@ export const NETWORKS: Network[] = [
     name: "Arbitrum",
     desc: "Arbitrum Mainnet (L2)",
     logoURI: "https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg",
-    subgraphEndpoint: import.meta.env.VITE_ARBITRUM_SUBGRAPH_URL,
+    subgraphEndpoint: [
+      import.meta.env.VITE_ARBITRUM_SUBGRAPH_URL,
+      import.meta.env.VITE_ARBITRUM_SUBGRAPH_URL_POOLS,
+    ],
     nonfungiblePositionManagerAddress: '0xC36442b4a4522E871399CD717aBDD847Ab11FE88',
     factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
     totalValueLockedUSD_gte: 1000000,
@@ -89,7 +92,10 @@ export const NETWORKS: Network[] = [
     name: "Base",
     desc: "Base Mainnet (L2)",
     logoURI: `${base.blockExplorers.default.url}/assets/base/images/svg/logos/chain-light.svg`,
-    subgraphEndpoint: import.meta.env.VITE_BASE_SUBGRAPH_URL,
+    subgraphEndpoint: [
+      import.meta.env.VITE_BASE_SUBGRAPH_URL,
+      import.meta.env.VITE_BASE_SUBGRAPH_URL_POOLS,
+    ],
     nonfungiblePositionManagerAddress: '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
     factory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
     totalValueLockedUSD_gte: 1000000,
@@ -105,14 +111,14 @@ const getNetworkConfigByChainId = (chainId: number): Network => {
   return network;
 }
 
-const _queryUniswap = async (query: string, chainId: number): Promise<GetPositionsAPIResponse> => {
+const _queryUniswap = async <T>(query: string, chainId: number): Promise<T> => {
   // cash management logic
   // find the owner of the query
-  const owner = query.match(/owner:\s*"([^"]+)"/)?.[1];
-  if (!owner) {
-    throw new Error('Owner not found in query');
+  let salt = query.match(/owner:\s*"([^"]+)"/)?.[1];
+  if (!salt) {
+    salt = 'pools'; // default salt for pools query
   }
-  const key = `uniswap-query-${chainId}-${owner}`;
+  const key = `uniswap-query-${chainId}-${salt}`;
   // Check if the query is cached less than 15minutes ago
   const cacheTime = 15 * 60 * 1000; // 15 minutes
   const cachedTime = localStorage.getItem(`${key}-time`);
@@ -121,7 +127,7 @@ const _queryUniswap = async (query: string, chainId: number): Promise<GetPositio
     const now = Date.now();
     if (now - parseInt(cachedTime, 10) < cacheTime) {
       console.log(`Using cached response for ${key}`);
-      return JSON.parse(cachedResponse) as GetPositionsAPIResponse;
+      return JSON.parse(cachedResponse) as T;
     }
   }
 
@@ -130,7 +136,8 @@ const _queryUniswap = async (query: string, chainId: number): Promise<GetPositio
   }
 
   const network = getNetworkConfigByChainId(chainId);
-  const req = await fetch(network.subgraphEndpoint, {
+  const endpoint = salt === 'pools' ? network.subgraphEndpoint[1] : network.subgraphEndpoint[0];
+  const req = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -148,13 +155,13 @@ const _queryUniswap = async (query: string, chainId: number): Promise<GetPositio
   // Cache the response
   localStorage.setItem(key, JSON.stringify(res));
   localStorage.setItem(`${key}-time`, Date.now().toString());
-  return res as GetPositionsAPIResponse;
+  return res as T;
 };
 
-export const fetcher = async (query: string, chainId: number): Promise<GetPositionsAPIResponse> => {
+export const fetcher = async <T>(query: string, chainId: number): Promise<T> => {
   try {
-    const response = await _queryUniswap(query, chainId);
-    if (!response || !response.data || !response.data.positions) {
+    const response = await _queryUniswap<T>(query, chainId);
+    if (!response) {
       throw new Error(`Invalid response structure for chain ${chainId}`);
     }
     console.log(`Fetched data for chain ${chainId}:`, response);

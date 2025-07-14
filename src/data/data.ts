@@ -1,4 +1,4 @@
-import { fetcher, NETWORKS, PositionAPIResponse } from "../services/fetcher"
+import { fetcher, GetPositionsAPIResponse, NETWORKS, PositionAPIResponse } from "../services/fetcher"
 import { getPositions } from "../services/querys"
 import { Position } from "../types";
 import nonfungiblePositionManagerAbi from "@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json";
@@ -20,7 +20,7 @@ import { getToken } from "@lifi/sdk";
 
 
 export const getPositionsData = async (owner: string, chainId: number = chains.arbitrum.id) => {
-  const response = fetcher(getPositions(owner), chainId);
+  const response = fetcher<GetPositionsAPIResponse>(getPositions(owner), chainId);
   const data = await response;
   return _formatPositions(data.data.positions, chainId);
 }

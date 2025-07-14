@@ -15,6 +15,7 @@
     "@lifi/sdk": "^3.7.11",
     "@uniswap/v3-periphery": "^1.4.4",
     "@uniswap/v3-sdk": "^3.25.2",
+    "bignumber.js": "^9.3.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

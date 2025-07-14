@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Search, TrendingUp, ExternalLink, Star } from 'lucide-react';
-import { Pool } from '../types';
+import { PoolColumnDataType } from '../types';
 
 interface PoolSearchProps {
-  pools: Pool[];
+  pools: PoolColumnDataType[];
 }
 
 export const PoolSearch: React.FC<PoolSearchProps> = ({ pools }) => {
@@ -23,9 +23,9 @@ export const PoolSearch: React.FC<PoolSearchProps> = ({ pools }) => {
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'apr': return b.apr - a.apr;
-        case 'tvl': return b.tvlUSD - a.tvlUSD;
-        case 'volume': return b.volumeUSD24h - a.volumeUSD24h;
+        case 'apr': return b.apy - a.apy;
+        case 'tvl': return b.totalValueLockedUSD - a.totalValueLockedUSD;
+        case 'volume': return b.volume24h - a.volume24h;
         default: return 0;
       }
     });
@@ -95,7 +95,7 @@ export const PoolSearch: React.FC<PoolSearchProps> = ({ pools }) => {
           </div>
         ) : (
           filteredPools.map((pool) => (
-            <div key={pool.address} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+            <div key={pool.poolId} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
@@ -116,7 +116,7 @@ export const PoolSearch: React.FC<PoolSearchProps> = ({ pools }) => {
                       {pool.token0.symbol}/{pool.token1.symbol}
                     </h4>
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <span>{pool.feeTier / 10000}% Fee</span>
+                      <span>{Number(pool.feeTier) / 10_000}% Fee</span>
                       <span>•</span>
                       <img src={pool.chain.logoURI} alt={pool.chain.name} className="w-4 h-4" />
                       <span>{pool.chain.name}</span>
@@ -127,20 +127,20 @@ export const PoolSearch: React.FC<PoolSearchProps> = ({ pools }) => {
                 <div className="text-right">
                   <div className="flex items-center space-x-2 mb-1">
                     <Star className="w-4 h-4 text-yellow-500" />
-                    <span className="text-xl font-bold text-green-600">{pool.apr.toFixed(1)}%</span>
+                    <span className="text-xl font-bold text-green-600">{pool.apy}%</span>
                     <span className="text-sm text-gray-500">APR</span>
                   </div>
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
-                    <span>TVL: {formatLargeNumber(pool.tvlUSD)}</span>
-                    <span>Vol: {formatLargeNumber(pool.volumeUSD24h)}</span>
+                    <span>TVL: {formatLargeNumber(pool.totalValueLockedUSD)}</span>
+                    <span>Vol: {formatLargeNumber(pool.volume24h)}</span>
                   </div>
                 </div>
               </div>
               
               <div className="mt-4 flex items-center justify-between">
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <span>24h Fees: {formatLargeNumber(pool.feesUSD24h)}</span>
-                  <span>Liquidity: {formatLargeNumber(parseInt(pool.liquidity))}</span>
+                  <span>24h Fees: {formatLargeNumber(pool.fee24h)}</span>
+                  {/* <span>Liquidity: {formatLargeNumber(parseInt(pool.))}</span> */}
                 </div>
                 
                 <div className="flex items-center space-x-2">

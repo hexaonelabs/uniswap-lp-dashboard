@@ -83,3 +83,47 @@ export const getPositions = (owner: string) => `
     }
   }
 }`;
+
+export const getPools = (first: number, totalValueLockedUSD_gte: number, volumeUSD_gte: number) => `
+{
+      pools (first: ${first}, orderBy: totalValueLockedUSD, orderDirection: desc, where: {liquidity_gt: 0, totalValueLockedUSD_gte: ${totalValueLockedUSD_gte}, volumeUSD_gte: ${volumeUSD_gte}}) {
+        id
+        token0 {
+          id
+          name
+          symbol
+          volumeUSD
+          decimals
+          totalValueLockedUSD
+          poolCount
+          tokenDayData(first: 1, orderBy: date, orderDirection: desc) {
+            priceUSD
+          }
+        }
+        token1 {
+          id
+          name
+          symbol
+          volumeUSD
+          decimals
+          totalValueLockedUSD
+          poolCount
+          tokenDayData(first: 1, orderBy: date, orderDirection: desc) {
+            priceUSD
+          }
+        }
+        feeTier
+        liquidity
+        tick
+        totalValueLockedUSD
+        poolDayData(first: 15, skip: 1, orderBy: date, orderDirection: desc) {
+          date
+          volumeUSD
+          open 
+          high
+          low
+          close
+        }
+      }
+    }
+`;
