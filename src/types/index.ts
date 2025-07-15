@@ -144,6 +144,8 @@ export interface PoolAPIResponse {
     tokenDayData: {priceUSD: string;}[]
   };
   totalValueLockedUSD: string;
+  // feeGrowthGlobal0X128: string;
+  // feeGrowthGlobal1X128: string;
 }
 
 export interface PoolDayDatumAPIResponse {

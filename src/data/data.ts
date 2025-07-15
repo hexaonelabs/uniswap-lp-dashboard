@@ -16,7 +16,9 @@ import {
   // AbiEvent,
 } from "viem";
 import * as chains from "viem/chains";
-import { getToken } from "@lifi/sdk";
+// import { getPriceChart } from "../services/coingecko";
+import { getTokenLogoURL } from "../utils/uniswap/helper";
+import { getTokens } from "@lifi/sdk";
 
 
 export const getPositionsData = async (owner: string, chainId: number = chains.arbitrum.id) => {
@@ -34,21 +36,19 @@ const _formatPositions = async (positions: PositionAPIResponse[], chainId: numbe
   }
 
   // Loop through each position and format it
+  const {tokens: tokensAvailables} = await getTokens({
+    chains: [chain.id],
+    minPriceUSD: 0.01,
+  });
   for (const position of positions) {
-    const token0 = await getToken(chainId, position.token0.symbol).catch((error) => {
-      console.error(`Error fetching token0 for position ${position.id}:`, error);
-      return {
-        priceUSD: '0',
-        logoURI: '',
-      };
-    });
-    const token1 = await getToken(chainId, position.token1.symbol).catch((error) => {
-      console.error(`Error fetching token1 for position ${position.id}:`, error);
-      return {
-        priceUSD: '0',
-        logoURI: '',
-      };
-    });
+    const token0 = tokensAvailables[chain.id].find((token) => token.address.toLowerCase() === position.token0.id.toLowerCase()) || {
+        priceUSD: `0`,
+        logoURI: getTokenLogoURL(chain.keyMapper, position.token0.id)
+    };
+    const token1 = tokensAvailables[chain.id].find((token) => token.address.toLowerCase() === position.token1.id.toLowerCase()) || {
+        priceUSD: `0`,
+        logoURI: getTokenLogoURL(chain.keyMapper, position.token1.id)
+    };
     const fees = await getFormattedUnclaimedFees(
       position, chainId
     );

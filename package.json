@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "generate-token-image-uri-mapping": "node ./scripts/generateTokenImageURI.cjs",
+    "generate-contract-address-mapping": "node ./scripts/generateTokenAddressMaping.cjs",
+    "generate": "npm run generate-token-image-uri-mapping && npm run generate-contract-address-mapping",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
@@ -13,16 +16,23 @@
   "dependencies": {
     "@ethersproject/bignumber": "^5.8.0",
     "@lifi/sdk": "^3.7.11",
+    "@types/react-router-dom": "^5.3.3",
     "@uniswap/v3-periphery": "^1.4.4",
     "@uniswap/v3-sdk": "^3.25.2",
+    "axios": "^1.10.0",
     "bignumber.js": "^9.3.1",
+    "d3": "^7.9.0",
+    "framer-motion": "^12.23.5",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
+    "react-apexcharts": "^1.7.0",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^7.6.3",
     "viem": "^2.31.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@types/d3": "^7.4.3",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

@@ -96,9 +96,6 @@ export const getPools = (first: number, totalValueLockedUSD_gte: number, volumeU
           decimals
           totalValueLockedUSD
           poolCount
-          tokenDayData(first: 1, orderBy: date, orderDirection: desc) {
-            priceUSD
-          }
         }
         token1 {
           id
@@ -108,9 +105,6 @@ export const getPools = (first: number, totalValueLockedUSD_gte: number, volumeU
           decimals
           totalValueLockedUSD
           poolCount
-          tokenDayData(first: 1, orderBy: date, orderDirection: desc) {
-            priceUSD
-          }
         }
         feeTier
         liquidity

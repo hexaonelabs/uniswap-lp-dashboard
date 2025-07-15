@@ -3,7 +3,9 @@ import { fetcher, Network, NETWORKS } from "../services/fetcher";
 import { getPools } from "../services/querys";
 import { GetPoolsAPIResponse, PoolAPIResponse, PoolColumnDataType, PoolDayData, PoolDayDatumAPIResponse, Risk, RiskChecklist, Token } from "../types";
 import BigNumber from 'bignumber.js';
-import { getToken } from "@lifi/sdk";
+import { getTokens } from "@lifi/sdk";
+import { getFeeTierPercentage, getTokenLogoURL } from "../utils/uniswap/helper";
+import { getLiquidityDelta, getPriceFromTick } from "../utils/uniswap/math";
 
 export const getPoolsData = async (
   totalValueLockedUSD_gte: number,
@@ -104,6 +106,11 @@ export const getPoolsData = async (
 };
 
 const _processPools = async (allPools: PoolAPIResponse[], chain: Network): Promise<PoolColumnDataType[]> => {
+    const {tokens: tokensAvailables} = await getTokens({
+      chains: [chain.id],
+      minPriceUSD: 0.01,
+    });
+  const tokens = tokensAvailables[chain.id] || [];
   const topPools = allPools.map( async (pool, index) => {
     // Basic Stats
     const poolDayData7d = pool.poolDayData.slice(0, 7);
@@ -143,13 +150,28 @@ const _processPools = async (allPools: PoolAPIResponse[], chain: Network): Promi
     if (riskChecklistCount >= 1) risk = Risk.LOW_RISK;
     if (riskChecklistCount >= 4) risk = Risk.HIGH_RISK;
 
-    const { estimatedFee24h, amount0, amount1 } = calculatePoolEstimatedFees(
+    const token0 = tokens.find((token) => token.address.toLowerCase() === pool.token0.id.toLowerCase()) || {
+      priceUSD: `0`,
+      logoURI: getTokenLogoURL(chain.keyMapper, pool.token0.id)
+    };
+    const token1 = tokens.find((token) => token.address.toLowerCase() === pool.token1.id.toLowerCase()) || {
+      priceUSD: `0`,
+      logoURI: getTokenLogoURL(chain.keyMapper, pool.token1.id)
+    };
+    const { estimatedFee24h, amount0, amount1 } = await calculatePoolEstimatedFees(
       1000,
-      pool
+      {...pool, 
+        token0: {
+          ...pool.token0,
+          priceUSD: token0.priceUSD || '0',
+        },
+        token1: {
+          ...pool.token1,
+          priceUSD: token1.priceUSD || '0',
+        },
+      }
     );
     const fee1y = (estimatedFee24h || 0) * 365;
-    const token0 = await getToken(chain.id, pool.token0.id);
-    const token1 = await getToken(chain.id, pool.token1.id);
     return <PoolColumnDataType>{
       key: index.toString(),
       poolId: pool.id,
@@ -191,9 +213,18 @@ const _processPools = async (allPools: PoolAPIResponse[], chain: Network): Promi
   return Promise.all(topPools);
 };
 
-export const calculatePoolEstimatedFees = (
+export const calculatePoolEstimatedFees = async (
   depositAmountUSD: number,
-  pool: PoolAPIResponse
+  pool: PoolAPIResponse & {
+    token0: {
+      decimals: string;
+      priceUSD: string;
+    };
+    token1: {
+      decimals: string;
+      priceUSD: string;
+    };
+  }
 ) => {
   // Basic Stats
   const poolDayData7d = pool.poolDayData.slice(0, 7);
@@ -213,8 +244,8 @@ export const calculatePoolEstimatedFees = (
   );
   const Pl = P - (P * priceVolatility24HPercentage) / 100;
   const Pu = P + (P * priceVolatility24HPercentage) / 100;
-  const priceUSDX = Number(pool.token1.tokenDayData?.[0]?.priceUSD || 0);
-  const priceUSDY = Number(pool.token0.tokenDayData?.[0]?.priceUSD || 0);
+  const priceUSDX = Number(pool.token1.priceUSD);
+  const priceUSDY = Number(pool.token0.priceUSD);
   const { amount0, amount1 } = getTokensAmountFromDepositAmountUSD(
     P,
     Pl,
@@ -249,15 +280,6 @@ export const calculatePoolEstimatedFees = (
     amount1,
   };
 };
-
-export const getFeeTierPercentage = (tier: string): number => {
-  if (tier === "100") return 0.01 / 100;
-  if (tier === "500") return 0.05 / 100;
-  if (tier === "3000") return 0.3 / 100;
-  if (tier === "10000") return 1 / 100;
-  return 0;
-};
-
 
 export const estimateFee = (
   liquidityDelta: bn,
@@ -302,107 +324,5 @@ export const getTokensAmountFromDepositAmountUSD = (
 
   return { amount0: deltaX, amount1: deltaY, liquidityDelta: deltaL };
 };
-export const getLiquidityDelta = (
-  P: number,
-  lowerP: number,
-  upperP: number,
-  amount0: number,
-  amount1: number,
-  token0Decimal: number,
-  token1Decimal: number
-): bn => {
-  const amt0 = expandDecimals(amount0, token1Decimal);
-  const amt1 = expandDecimals(amount1, token0Decimal);
-
-  const sqrtRatioX96 = getSqrtPriceX96(P, token0Decimal, token1Decimal);
-  const sqrtRatioAX96 = getSqrtPriceX96(lowerP, token0Decimal, token1Decimal);
-  const sqrtRatioBX96 = getSqrtPriceX96(upperP, token0Decimal, token1Decimal);
-
-  let liquidity: bn;
-  if (sqrtRatioX96.lte(sqrtRatioAX96)) {
-    liquidity = getLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amt0);
-  } else if (sqrtRatioX96.lt(sqrtRatioBX96)) {
-    const liquidity0 = getLiquidityForAmount0(
-      sqrtRatioX96,
-      sqrtRatioBX96,
-      amt0
-    );
-    const liquidity1 = getLiquidityForAmount1(
-      sqrtRatioAX96,
-      sqrtRatioX96,
-      amt1
-    );
-
-    liquidity = bn.min(liquidity0, liquidity1);
-  } else {
-    liquidity = getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amt1);
-  }
-
-  return liquidity;
-};
 
 
-const getLiquidityForAmount0 = (
-  sqrtRatioAX96: bn,
-  sqrtRatioBX96: bn,
-  amount0: bn
-): bn => {
-  // amount0 * (sqrt(upper) * sqrt(lower)) / (sqrt(upper) - sqrt(lower))
-  const intermediate = mulDiv(sqrtRatioBX96, sqrtRatioAX96, Q96);
-  return mulDiv(amount0, intermediate, sqrtRatioBX96.minus(sqrtRatioAX96));
-};
-
-const getLiquidityForAmount1 = (
-  sqrtRatioAX96: bn,
-  sqrtRatioBX96: bn,
-  amount1: bn
-): bn => {
-  // amount1 / (sqrt(upper) - sqrt(lower))
-  return mulDiv(amount1, Q96, sqrtRatioBX96.minus(sqrtRatioAX96));
-};
-
-const Q96 = new bn(2).pow(96);
-// const Q128 = new bn(2).pow(128);
-// const ZERO = new bn(0);
-
-export const getPriceFromTick = (
-  tick: number,
-  token0Decimal: string,
-  token1Decimal: string
-): number => {
-  const sqrtPrice = new bn(Math.pow(Math.sqrt(1.0001), tick)).multipliedBy(
-    new bn(2).pow(96)
-  );
-  const token0 = expandDecimals(1, Number(token0Decimal));
-  const token1 = expandDecimals(1, Number(token1Decimal));
-  const L2 = mulDiv(
-    encodeSqrtPriceX96(token0),
-    encodeSqrtPriceX96(token1),
-    Q96
-  );
-  const price = mulDiv(L2, Q96, sqrtPrice)
-    .div(new bn(2).pow(96))
-    .div(new bn(10).pow(token0Decimal))
-    .pow(2);
-
-  return price.toNumber();
-};
-const getSqrtPriceX96 = (
-  price: number,
-  token0Decimal: number,
-  token1Decimal: number
-): bn => {
-  const token0 = expandDecimals(price, token0Decimal);
-  const token1 = expandDecimals(1, token1Decimal);
-
-  return token0.div(token1).sqrt().multipliedBy(Q96);
-};
-const expandDecimals = (n: number | string | bn, exp: number): bn => {
-  return new bn(n).multipliedBy(new bn(10).pow(exp));
-};
-const mulDiv = (a: bn, b: bn, multiplier: bn) => {
-  return a.multipliedBy(b).div(multiplier);
-};
-const encodeSqrtPriceX96 = (price: number | string | bn): bn => {
-  return new bn(price).sqrt().multipliedBy(Q96).integerValue(3);
-};

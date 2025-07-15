@@ -58,6 +58,7 @@ export interface Network extends Chain {
   // id: string;
   name: string;
   desc: string;
+  keyMapper: string; // used for Coingecko token mapping
   logoURI: string;
   subgraphEndpoint: string[];
   nonfungiblePositionManagerAddress: string;
@@ -77,6 +78,7 @@ export const NETWORKS: Network[] = [
     ...arbitrum,
     name: "Arbitrum",
     desc: "Arbitrum Mainnet (L2)",
+    keyMapper: "arbitrum",
     logoURI: "https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg",
     subgraphEndpoint: [
       import.meta.env.VITE_ARBITRUM_SUBGRAPH_URL,
@@ -84,13 +86,14 @@ export const NETWORKS: Network[] = [
     ],
     nonfungiblePositionManagerAddress: '0xC36442b4a4522E871399CD717aBDD847Ab11FE88',
     factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-    totalValueLockedUSD_gte: 1000000,
-    volumeUSD_gte: 500000,
+    totalValueLockedUSD_gte: 200_000,
+    volumeUSD_gte: 100_000,
   },
     {
     ...base,
     name: "Base",
     desc: "Base Mainnet (L2)",
+    keyMapper: "base",
     logoURI: `${base.blockExplorers.default.url}/assets/base/images/svg/logos/chain-light.svg`,
     subgraphEndpoint: [
       import.meta.env.VITE_BASE_SUBGRAPH_URL,
@@ -98,8 +101,8 @@ export const NETWORKS: Network[] = [
     ],
     nonfungiblePositionManagerAddress: '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
     factory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
-    totalValueLockedUSD_gte: 1000000,
-    volumeUSD_gte: 500000,
+    totalValueLockedUSD_gte: 200_000,
+    volumeUSD_gte: 100_000,
   },
 ];
 

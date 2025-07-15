@@ -15,8 +15,8 @@ export const usePools = () => {
     setError(null);
     
     Promise.all([
-      getPoolsData(NETWORKS[0].totalValueLockedUSD_gte, NETWORKS[0].volumeUSD_gte, NETWORKS[0].id, 5),
-      getPoolsData(NETWORKS[1].totalValueLockedUSD_gte, NETWORKS[1].volumeUSD_gte, NETWORKS[1].id, 5),
+      getPoolsData(NETWORKS[0].totalValueLockedUSD_gte, NETWORKS[0].volumeUSD_gte, NETWORKS[0].id, 500),
+      getPoolsData(NETWORKS[1].totalValueLockedUSD_gte, NETWORKS[1].volumeUSD_gte, NETWORKS[1].id, 500),
     ])
     .then((responses) => {
       const allPools = responses.flatMap(response => response.pools);

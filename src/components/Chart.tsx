@@ -21,23 +21,23 @@ export const Chart: React.FC<ChartProps> = ({ data }) => {
     }
   };
 
-  const getMetricIcon = () => {
-    switch (activeMetric) {
-      case 'totalValue': return <DollarSign className="w-5 h-5" />;
-      case 'feesEarned': return <TrendingUp className="w-5 h-5" />;
-      case 'positions': return <Activity className="w-5 h-5" />;
-      default: return <DollarSign className="w-5 h-5" />;
-    }
-  };
+  // const getMetricIcon = () => {
+  //   switch (activeMetric) {
+  //     case 'totalValue': return <DollarSign className="w-5 h-5" />;
+  //     case 'feesEarned': return <TrendingUp className="w-5 h-5" />;
+  //     case 'positions': return <Activity className="w-5 h-5" />;
+  //     default: return <DollarSign className="w-5 h-5" />;
+  //   }
+  // };
 
-  const getMetricLabel = () => {
-    switch (activeMetric) {
-      case 'totalValue': return 'Total Value';
-      case 'feesEarned': return 'Fees Earned';
-      case 'positions': return 'Positions';
-      default: return 'Total Value';
-    }
-  };
+  // const getMetricLabel = () => {
+  //   switch (activeMetric) {
+  //     case 'totalValue': return 'Total Value';
+  //     case 'feesEarned': return 'Fees Earned';
+  //     case 'positions': return 'Positions';
+  //     default: return 'Total Value';
+  //   }
+  // };
 
   const normalizeValue = (value: number) => {
     return ((value - minValue) / (maxValue - minValue)) * 200;
@@ -147,7 +147,6 @@ export const Chart: React.FC<ChartProps> = ({ data }) => {
                     cy={y}
                     r="12"
                     className="fill-transparent cursor-pointer hover:fill-black hover:fill-opacity-10"
-                    title={`${formatValue(point[activeMetric])} on ${new Date(point.date).toLocaleDateString()}`}
                   />
                 </g>
               );
