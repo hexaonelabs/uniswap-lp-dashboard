@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import CorrelationChart from "../components/CorrelationChart";
 import { PoolColumnDataType } from "../types";
-import { getPriceChart, PriceChart, QueryPeriodEnum } from "../services/coingecko";
+import { getPriceChart, QueryPeriodEnum } from "../services/coingecko";
 
 // Composant pour les métriques principales
 const MetricsCard = ({
@@ -404,7 +404,7 @@ export const EstimateEarningsPage = () => {
   const poolAddress = searchParams.get("poolAddress");
 
   const { pools, loading } = usePools();
-  const [liquidityAmount, setLiquidityAmount] = useState(searchParams.get('liquidityAmount') || 1_000);
+  const [liquidityAmount, setLiquidityAmount] = useState(Number(searchParams.get('liquidityAmount') || 1_000));
   const [timeframe, setTimeframe] = useState(1);
 
   const [isFullRange, setIsFullRange] = useState(false);
@@ -414,6 +414,7 @@ export const EstimateEarningsPage = () => {
   
   const [token0PriceData, setToken0PriceData] = useState<Array<{ timestamp: number; value: number }>>([]);
   const [token1PriceData, setToken1PriceData] = useState<Array<{ timestamp: number; value: number }>>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [priceDataLoading, setPriceDataLoading] = useState(false);
 
   const currentPool = useMemo(() => {
