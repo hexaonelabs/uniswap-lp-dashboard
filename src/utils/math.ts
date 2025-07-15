@@ -56,7 +56,7 @@ export const processPriceChartData = (
   for (let i = 0; i < length; ++i) {
     points.push({
       x: token0PriceChart.prices[i].timestamp,
-      y: token1PriceChart.prices[i].value / token0PriceChart.prices[i].value,
+      y: token0PriceChart.prices[i].value / token1PriceChart.prices[i].value,
     });
   }
 

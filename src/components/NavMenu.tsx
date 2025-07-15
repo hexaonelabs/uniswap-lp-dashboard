@@ -1,5 +1,6 @@
 import { NavLink } from "react-router";
 import { useState, useEffect } from "react";
+import { CalculatorIcon } from "lucide-react";
 
 const HomeIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -55,12 +56,12 @@ export function NavMenu({ linkToDashboard }: NavMenuProps) {
       label: "Explore Pools",
       shortLabel: "Explore"
     },
-    // {
-    //   to: "/estimate",
-    //   icon: EstimateIcon,
-    //   label: "Estimate Earnings",
-    //   shortLabel: "Estimate"
-    // },
+    {
+      to: "/estimate",
+      icon: CalculatorIcon,
+      label: "Estimate Earnings",
+      shortLabel: "Estimate"
+    },
     // {
     //   to: "/analytics",
     //   icon: AnalyticsIcon,

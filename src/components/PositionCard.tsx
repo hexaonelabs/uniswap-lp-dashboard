@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Position } from "../types";
 import { Calculator as CalculatorModal } from "./Calculator";
+import { useNavigate } from "react-router-dom";
 
 interface PositionCardProps {
   position: Position;
@@ -18,6 +19,7 @@ interface PositionCardProps {
 export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
   const [showCalculator, setShowCalculator] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const navigate = useNavigate();
 
   // const formatPrice = (price: number) => {
   //   return price > 1 ? `$${price.toLocaleString()}` : `$${price.toFixed(6)}`;
@@ -198,7 +200,11 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => setShowCalculator(true)}
+                onClick={() => {
+                  // Navigate to estimate page with searchParams from currrent position
+                  const url = `/estimate?chainId=${position.chain.id}&poolAddress=${position.poolAddress}&minPrice=${position.priceRange.min}&maxPrice=${position.priceRange.max}&liquidityAmount=${position.totalValueUSD.toFixed(2)}`;
+                  navigate(url);
+                }}
                 className="flex items-center space-x-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
               >
                 <Calculator className="w-4 h-4" />

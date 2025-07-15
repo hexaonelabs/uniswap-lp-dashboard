@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Search, ExternalLink, Star, BarChart3 } from "lucide-react";
+import { Search, ExternalLink, Star, BarChart3, Calculator } from "lucide-react";
 import { usePools } from "../hooks/usePools";
-// import { PoolColumnDataType, PoolDayData } from "../types";
-// import Chart from "react-apexcharts";
-// import { round } from "../utils/math";
-// import { LiquidityPositionChart } from "./LiquidityPositionChart";
-// import CorrelationChart from "./CorrelationChart";
 import { useNavigate } from "react-router-dom";
 
 // const CandleStickChart = ({ data }: { data: PoolColumnDataType }) => {
@@ -122,11 +117,6 @@ import { useNavigate } from "react-router-dom";
 //     </div>
 //   );
 // };
-// const EstimateIcon = ({ className }: { className?: string }) => (
-//   <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-//     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m9-9H3m18 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-//   </svg>
-// );
 
 export const PoolSearch: React.FC = () => {
   const { pools, loading: loading } = usePools();
@@ -315,7 +305,7 @@ export const PoolSearch: React.FC = () => {
                     onClick={() => {
                       navigate(`/estimate?chainId=${pool.chain.id}&poolAddress=${pool.poolId}`);
                     }} >
-                    <BarChart3 className="w-4 h-4" />
+                    <Calculator className="w-4 h-4" />
                     <span>
                       Estimate earnings
                     </span>
