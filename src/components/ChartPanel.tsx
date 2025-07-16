@@ -79,27 +79,5 @@ export const ChartPanel = ({
         }}
       />
     </div>
-
-    {/* Métriques supplémentaires */}
-    <div className="grid grid-cols-2 gap-4 mt-6">
-      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-        <div className="text-sm font-medium text-gray-600 mb-1">Total Fees</div>
-        <div className="text-xl font-bold text-green-600">
-          $
-          {correlationData.reduce((sum, data) => sum + data.fees, 0).toFixed(2)}
-        </div>
-      </div>
-      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-        <div className="text-sm font-medium text-gray-600 mb-1">
-          Impermanent Loss
-        </div>
-        <div className="text-xl font-bold text-red-500">
-          $
-          {Math.abs(
-            correlationData.reduce((sum, data) => sum + data.impermanentLoss, 0)
-          ).toFixed(2)}
-        </div>
-      </div>
-    </div>
   </div>
 );

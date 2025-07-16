@@ -8,12 +8,103 @@ import {
   Settings,
   Clock,
   Calculator,
+  ExternalLink,
 } from "lucide-react";
 import { getPriceChart, QueryPeriodEnum } from "../services/coingecko";
 import { SimulationControlsPanel } from "../components/SimulationControlsSimulationControlsPanel";
 import { ChartPanel } from "../components/ChartPanel";
 import { MetricsCard } from "../components/MetricsCard";
 import { VolumeChart } from "../components/positions/VolumeChart";
+import { NETWORKS } from "../services/fetcher";
+import DexScreenerIcon from "../assets/icons/dexscreener.svg";
+import ScanExplorerIcon from "../assets/icons/scanexplorer.svg";
+
+export interface FeeCalculationParams {
+  volume: number;
+  feeTier: number; // en unités (ex: 3000 pour 0.3%)
+  liquidityAmount: number;
+  totalValueLocked: number;
+  currentPrice: number;
+  priceRangeMin: number;
+  priceRangeMax: number;
+  isFullRange: boolean;
+}
+
+export interface FeeEstimateResult {
+  estimatedFees: number;
+  liquidityConcentration: number;
+  liquidityShare: number;
+  baseFees: number;
+  isInRange: boolean;
+}
+
+export const calculateEstimatedFees = (
+  params: FeeCalculationParams
+): FeeEstimateResult => {
+  const {
+    volume,
+    feeTier,
+    liquidityAmount,
+    totalValueLocked,
+    currentPrice,
+    priceRangeMin,
+    priceRangeMax,
+    isFullRange,
+  } = params;
+
+  // Calcul du pourcentage de frais (ex: 3000 -> 0.003 = 0.3%)
+  const feeTierPercentage = feeTier / 1000000;
+
+  // Frais de base générés par le volume
+  const baseFees = volume * feeTierPercentage;
+
+  // Part de liquidité dans le pool
+  const liquidityShare =
+    totalValueLocked > 0 ? liquidityAmount / totalValueLocked : 0;
+
+  // Calcul de la concentration de liquidité
+  let liquidityConcentration = 1;
+  if (!isFullRange && priceRangeMin < priceRangeMax && currentPrice > 0) {
+    const rangeSize = (priceRangeMax - priceRangeMin) / currentPrice;
+    // Plus la range est petite, plus la concentration est élevée
+    liquidityConcentration = Math.min(1 / Math.max(rangeSize, 0.01), 10);
+  }
+
+  // Vérifier si le prix actuel est dans la range
+  const isInRange = true;
+  // isFullRange || (currentPrice >= priceRangeMin && currentPrice <= priceRangeMax);
+
+  // Calcul des frais estimés
+  const estimatedFees =
+    baseFees * liquidityShare * (isInRange ? liquidityConcentration : 0);
+
+  return {
+    estimatedFees,
+    liquidityConcentration,
+    liquidityShare,
+    baseFees,
+    isInRange,
+  };
+};
+
+export const calculateFeesForPeriod = (
+  volumeData: number[],
+  params: Omit<FeeCalculationParams, "volume">
+): FeeEstimateResult[] => {
+  return volumeData.map((volume) =>
+    calculateEstimatedFees({ ...params, volume })
+  );
+};
+
+export const calculateAPY = (
+  estimatedFees: number,
+  liquidityAmount: number,
+  timeframeDays: number
+): number => {
+  if (liquidityAmount === 0 || timeframeDays === 0) return 0;
+
+  return (estimatedFees / liquidityAmount) * (365 / timeframeDays) * 100;
+};
 
 export const EstimateEarningsPage = () => {
   const [searchParams] = useSearchParams();
@@ -24,7 +115,7 @@ export const EstimateEarningsPage = () => {
   const [liquidityAmount, setLiquidityAmount] = useState(
     Number(searchParams.get("liquidityAmount") || 1_000)
   );
-  const [timeframe, setTimeframe] = useState(30);
+  const [timeframe, setTimeframe] = useState(14);
 
   const [isFullRange, setIsFullRange] = useState(false);
   const [priceRangeMin, setPriceRangeMin] = useState(
@@ -52,6 +143,10 @@ export const EstimateEarningsPage = () => {
     );
   }, [pools, poolAddress, chainId]);
 
+  const chain = useMemo(() => {
+    return NETWORKS.find((n) => n.id === Number(chainId));
+  }, [chainId]);
+
   useEffect(() => {
     if (
       currentPool &&
@@ -72,13 +167,15 @@ export const EstimateEarningsPage = () => {
   useEffect(() => {
     if (token0PriceData.length > 0 && token1PriceData.length > 0) {
       // Prendre les prix les plus récents des données CoinGecko
-      const latestToken0Price = token0PriceData[token0PriceData.length - 1]?.value;
-      const latestToken1Price = token1PriceData[token1PriceData.length - 1]?.value;
-      
+      const latestToken0Price =
+        token0PriceData[token0PriceData.length - 1]?.value;
+      const latestToken1Price =
+        token1PriceData[token1PriceData.length - 1]?.value;
+
       if (latestToken0Price && latestToken1Price) {
         const realCurrentPrice = latestToken0Price / latestToken1Price;
         setCurrentPrice(realCurrentPrice);
-        
+
         // Mettre à jour le range seulement si ce n'est pas déjà défini par l'utilisateur
         if (priceRangeMin === 0 && priceRangeMax === 0) {
           setPriceRangeMin(realCurrentPrice * 0.95);
@@ -87,7 +184,7 @@ export const EstimateEarningsPage = () => {
       }
     }
   }, [token0PriceData, token1PriceData, priceRangeMin, priceRangeMax]);
-  
+
   useEffect(() => {
     const loadPriceData = async () => {
       if (!currentPool) return;
@@ -97,7 +194,9 @@ export const EstimateEarningsPage = () => {
         // Calculer les dates de début et fin
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setDate(endDate.getDate() - Number(QueryPeriodEnum.ONE_MONTH));
+        startDate.setDate(
+          endDate.getDate() - Number(QueryPeriodEnum.ONE_MONTH)
+        );
 
         // Charger les données de prix pour les deux tokens
         const [token0Prices, token1Prices] = await Promise.all([
@@ -143,9 +242,12 @@ export const EstimateEarningsPage = () => {
     startDate.setDate(startDate.getDate() - timeframe);
 
     // Calculer le prix relatif ACTUEL pour la référence
-    const currentRelativePrice = token0PriceData.length > 0 && token1PriceData.length > 0 
-      ? token0PriceData[token0PriceData.length - 1].value / token1PriceData[token1PriceData.length - 1].value
-      : Number(currentPool.token0.priceUSD) / Number(currentPool.token1.priceUSD);
+    const currentRelativePrice =
+      token0PriceData.length > 0 && token1PriceData.length > 0
+        ? token0PriceData[token0PriceData.length - 1].value /
+          token1PriceData[token1PriceData.length - 1].value
+        : Number(currentPool.token0.priceUSD) /
+          Number(currentPool.token1.priceUSD);
 
     // Mettre à jour currentPrice avec la valeur cohérente
     if (currentPrice !== currentRelativePrice) {
@@ -153,16 +255,23 @@ export const EstimateEarningsPage = () => {
     }
 
     for (let i = 0; i < timeframe; i++) {
-            // Utiliser les indices en partant de la fin (données les plus récentes)
+      // Utiliser les indices en partant de la fin (données les plus récentes)
       const token0Index = Math.max(0, token0PriceData.length - timeframe + i);
       const token1Index = Math.max(0, token1PriceData.length - timeframe + i);
 
-      const token0Price = token0PriceData[token0Index]?.value || token0PriceData[token0PriceData.length - 1]?.value || Number(currentPool.token0.priceUSD);
-      const token1Price = token1PriceData[token1Index]?.value || token1PriceData[token1PriceData.length - 1]?.value || Number(currentPool.token1.priceUSD);
+      const token0Price =
+        token0PriceData[token0Index]?.value ||
+        token0PriceData[token0PriceData.length - 1]?.value ||
+        Number(currentPool.token0.priceUSD);
+      const token1Price =
+        token1PriceData[token1Index]?.value ||
+        token1PriceData[token1PriceData.length - 1]?.value ||
+        Number(currentPool.token1.priceUSD);
 
       // Calculer le prix relatif (token0/token1)
-      const relativePrice = token1Price > 0 ? token0Price / token1Price : currentRelativePrice;
-      
+      const relativePrice =
+        token1Price > 0 ? token0Price / token1Price : currentRelativePrice;
+
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
       const timestamp = date.getTime();
@@ -173,38 +282,39 @@ export const EstimateEarningsPage = () => {
       const dailyVolume =
         Number(poolDayData.volumeUSD) || currentPool.volume24h;
 
-      // Calcul des frais basé sur les vraies données
-      const feeTierPercentage = Number(currentPool.feeTier) / 1000000;
-      const baseFees = dailyVolume * feeTierPercentage;
-      const liquidityShare = liquidityAmount / currentPool.totalValueLockedUSD;
+      // Utiliser la nouvelle fonction de calcul des frais
+      const feeCalculation = calculateEstimatedFees({
+        volume: dailyVolume,
+        feeTier: Number(currentPool.feeTier),
+        liquidityAmount,
+        totalValueLocked: currentPool.totalValueLockedUSD,
+        currentPrice: relativePrice,
+        priceRangeMin,
+        priceRangeMax,
+        isFullRange,
+      });
 
-      // Vérifier si le prix est dans la range (seulement si pas full range)
-      const isInRange =
-        isFullRange ||
-        (relativePrice >= priceRangeMin && relativePrice <= priceRangeMax);
-      const estimatedFees =
-        baseFees * liquidityShare * (isInRange ? liquidityConcentration : 0);
-
-      // Calcul de l'impermanent loss basé sur les prix réels
-      const priceRatio = relativePrice / currentPrice;
-      const impermanentLoss = isFullRange
-        ? liquidityAmount * ((2 * Math.sqrt(priceRatio)) / (1 + priceRatio) - 1)
-        : (Math.abs(relativePrice - currentPrice) / currentPrice) *
-          liquidityAmount *
-          0.1;
+      const impermanentLoss = 0;
+      const apy = calculateAPY(
+        feeCalculation.estimatedFees,
+        liquidityAmount,
+        1
+      );
 
       data.push({
         timestamp,
         date: date.toLocaleDateString(),
-        fees: estimatedFees,
+        fees: feeCalculation.estimatedFees,
         impermanentLoss: Math.min(0, -Math.abs(impermanentLoss)),
-        netEarnings: estimatedFees + Math.min(0, -Math.abs(impermanentLoss)),
-        apy: ((estimatedFees + Math.min(0, -Math.abs(impermanentLoss))) / liquidityAmount) * (365 / timeframe) * 100,
+        netEarnings: feeCalculation.estimatedFees,
+        apy: apy * timeframe, // Ajuster pour la période complète
         price0: token0Price,
         price1: token1Price,
         relativePrice,
         volume: dailyVolume,
         tvl: currentPool.totalValueLockedUSD,
+        liquidityConcentration: feeCalculation.liquidityConcentration,
+        isInRange: feeCalculation.isInRange,
       });
     }
     return data;
@@ -212,7 +322,6 @@ export const EstimateEarningsPage = () => {
     currentPool,
     liquidityAmount,
     timeframe,
-    liquidityConcentration,
     token0PriceData,
     token1PriceData,
     currentPrice,
@@ -222,13 +331,21 @@ export const EstimateEarningsPage = () => {
   ]);
 
   const totalEarnings = useMemo(() => {
-    return correlationData.reduce((sum, data) => sum + data.netEarnings, 0);
+    if (correlationData.length === 0) return 0;
+    const actualDays = correlationData.length;
+    const totalActualEarnings = correlationData.reduce(
+      (sum, data) => sum + data.netEarnings,
+      0
+    );
+    const dailyAverageEarnings = totalActualEarnings / actualDays;
+    const monthlyEarnings = dailyAverageEarnings * 30;
+    return monthlyEarnings;
   }, [correlationData]);
 
-  const avgAPY = useMemo(() => {
-    const sum = correlationData.reduce((sum, data) => sum + data.apy, 0);
-    return sum / correlationData.length || 0;
-  }, [correlationData]);
+  // const avgAPY = useMemo(() => {
+  //   const sum = correlationData.reduce((sum, data) => sum + data.apy, 0);
+  //   return sum / correlationData.length || 0;
+  // }, [correlationData]);
 
   if (loading) {
     return (
@@ -263,56 +380,188 @@ export const EstimateEarningsPage = () => {
       <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 rounded-2xl shadow-xl">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
-                <Calculator className="w-8 h-8 text-white" />
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+              {/* Left block - Title and info */}
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
+                  <Calculator className="w-8 h-8 text-white" />
+                </div>
+
+                <div className="flex items-center gap-6">
+                  <div>
+                    <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      Estimate Earnings
+                    </h1>
+                    <div className="hidden sm:flex items-center pt-1">
+                      <img
+                        src={`${currentPool.token0.logoURI}`}
+                        alt={currentPool.token0.symbol}
+                        className="w-8 h-8 rounded-full border-2 border-purple-400 shadow-lg bg-white z-10"
+                        onError={(e) => {
+                          e.currentTarget.src = `https://via.placeholder.com/40/6366f1/ffffff?text=${currentPool.token0.symbol[0]}`;
+                        }}
+                      />
+                      <img
+                        src={`${currentPool.token1.logoURI}`}
+                        alt={currentPool.token1.symbol}
+                        className="w-8 h-8 -ml-2 rounded-full border-2 border-pink-400 shadow-lg bg-white"
+                        onError={(e) => {
+                          e.currentTarget.src = `https://via.placeholder.com/40/8b5cf6/ffffff?text=${currentPool.token1.symbol[0]}`;
+                        }}
+                      />
+                      <p className="text-gray-400 ml-2">
+                        {currentPool.token0.symbol} /{" "}
+                        {currentPool.token1.symbol} • Fee{" "}
+                        {(Number(currentPool.feeTier) / 10000).toFixed(2)}% •{" "}
+                        {chain?.name || "unknown"} Network
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Estimate Earnings
-                </h1>
-                <p className="text-gray-400">
+
+              {/* mobile only */}
+              <div className="flex sm:hidden items-center pt-1">
+                <img
+                  src={`${currentPool.token0.logoURI}`}
+                  alt={currentPool.token0.symbol}
+                  className="w-8 h-8 rounded-full border-2 border-purple-400 shadow-lg bg-white z-10"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://via.placeholder.com/40/6366f1/ffffff?text=${currentPool.token0.symbol[0]}`;
+                  }}
+                />
+                <img
+                  src={`${currentPool.token1.logoURI}`}
+                  alt={currentPool.token1.symbol}
+                  className="w-8 h-8 -ml-2 rounded-full border-2 border-pink-400 shadow-lg bg-white"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://via.placeholder.com/40/8b5cf6/ffffff?text=${currentPool.token1.symbol[0]}`;
+                  }}
+                />
+                <p className="text-gray-400 ml-2">
                   {currentPool.token0.symbol} / {currentPool.token1.symbol} •
-                  Fee {(Number(currentPool.feeTier) / 10000).toFixed(2)}%
+                  Fee {(Number(currentPool.feeTier) / 10000).toFixed(2)}% •{" "}
+                  {chain?.name || "unknown"} Network
                 </p>
+              </div>
+
+              {/* Right block - External links */}
+              <div className="flex flex-row gap-3 lg:flex-shrink-0">
+                <a
+                  href={`${chain?.blockExplorers?.default.url}/address/${poolAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <img
+                    src={ScanExplorerIcon}
+                    alt="Uniswap"
+                    className="w-4 h-4"
+                  />
+                </a>
+
+                <a
+                  href={`https://dexscreener.com/${chain?.keyMapper}/${poolAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <img
+                    src={DexScreenerIcon}
+                    alt="Uniswap"
+                    className="w-4 h-4"
+                  />
+                </a>
+
+                <a
+                  href={`https://app.uniswap.org/explore/pools/${chain?.keyMapper}/${poolAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4 text-pink-400" />
+                </a>
               </div>
             </div>
           </div>
 
           {/* Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <MetricsCard
-              icon={DollarSign}
-              title="Total Earnings"
-              value={`$${totalEarnings.toFixed(2)}`}
-              color="text-green-500"
-              progress={{
-                value: (totalEarnings / liquidityAmount) * 100,
-                gradient: "from-green-500 to-emerald-500",
-              }}
-            />
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <DollarSign className="w-8 h-8 text-green-500" />
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-white">
+                    ${(totalEarnings / 30).toFixed(2)}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    24h Estimated Earnings
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              {/* <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-700"
+                  style={{
+                    width: `${Math.min(
+                      ((totalEarnings) / liquidityAmount) * 100,
+                      100
+                    )}%`,
+                  }}
+                />
+              </div> */}
+
+              <div className="space-y-3 pt-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-left">
+                    <div className="text-lg font-semibold text-purple-300">
+                      ${totalEarnings.toFixed(2)}
+                    </div>
+                    <div className="text-xs text-gray-400 uppercase tracking-wide">
+                      Monthly
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-semibold text-purple-300">
+                      ${(totalEarnings * 12).toFixed(2)}
+                    </div>
+                    <div className="text-xs text-gray-400 uppercase tracking-wide">
+                      Yearly
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <MetricsCard
               icon={TrendingUp}
               title="Average APY"
-              value={`${avgAPY.toFixed(2)}%`}
-              color="text-purple-500"
-              subtitle={`$${((avgAPY / 100) * liquidityAmount).toFixed(
+              value={`${((totalEarnings / liquidityAmount) * 12 * 100).toFixed(
                 2
-              )} estimated earnings in ${timeframe} days`}
+              )}%`}
+              color="text-purple-500"
+              subtitle={`Annualized return on $${liquidityAmount.toLocaleString()} liquidity`}
             />
             <MetricsCard
               icon={Settings}
               title="Liquidity Amount"
               value={`$${liquidityAmount.toLocaleString()}`}
               color="text-blue-500"
-              subtitle="Simulated liquidity amount"
+              subtitle={`${(
+                (liquidityAmount / currentPool.totalValueLockedUSD) *
+                100
+              ).toFixed(3)}% of pool TVL ($${(
+                currentPool.totalValueLockedUSD / 1000000
+              ).toFixed(1)}M)`}
             />
             <MetricsCard
               icon={Clock}
               title="Timeframe"
               value={`${timeframe}d`}
-              color="text-orange-500"
-              subtitle="Simulation timeframe"
+              color="text-pink-500"
+              subtitle="Historical data analysis period"
             />
           </div>
         </div>
@@ -352,9 +601,7 @@ export const EstimateEarningsPage = () => {
           />
 
           {/* Volume Chart */}
-          <VolumeChart
-            poolDayDatas={currentPool.poolDayDatas}
-          />
+          <VolumeChart poolDayDatas={currentPool.poolDayDatas} />
         </div>
       </div>
     </div>

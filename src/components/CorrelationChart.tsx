@@ -51,7 +51,6 @@ const CorrelationChart = ({ state }: {state: CorrelationChartProps}) => {
       state.token0PriceChart,
       state.token1PriceChart
     );
-    console.log("CorrelationChart data", data);
     setData(data);
 
     let width = 500;
