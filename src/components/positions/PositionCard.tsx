@@ -238,15 +238,30 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
             <div className="mt-4 pt-4 border-t border-gray-100">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
+                  <p className="text-gray-500">Pool Address</p>
+                  <p className="font-mono text-xs text-gray-800">
+                    {position.poolAddress}
+                  </p>
+                </div>
+                <div></div>
+                <div>
+                  <p className="text-gray-500">Position ID</p>
+                  <p className="font-mono text-xs text-gray-800">
+                    {position.id}
+                  </p>
+                </div>
+                <div></div>
+                <div>
                   <p className="text-gray-500">Tokens LP</p>
                   <p className="font-mono text-xs text-gray-800">
                     {position.token0.symbol} / {position.token1.symbol}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Position ID</p>
-                  <p className="font-mono text-xs text-gray-800">
-                    {position.id}
+                  <p className="text-gray-500">Last Updated</p>
+                  <p className="text-gray-800">
+                    {new Date(position.lastUpdated).toLocaleDateString()}{" "}
+                    {new Date(position.lastUpdated).toLocaleTimeString()}
                   </p>
                 </div>
                 <div>
@@ -314,13 +329,6 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
                       ${((position.feesEarnedUSD * position.apr) / 365).toFixed(2)}
                       {")"}
                     </span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Last Updated</p>
-                  <p className="text-gray-800">
-                    {new Date(position.lastUpdated).toLocaleDateString()}{" "}
-                    {new Date(position.lastUpdated).toLocaleTimeString()}
                   </p>
                 </div>
               </div>

@@ -23,7 +23,7 @@ export const EstimateEarningsPage = () => {
   const [liquidityAmount, setLiquidityAmount] = useState(
     Number(searchParams.get("liquidityAmount") || 1_000)
   );
-  const [timeframe, setTimeframe] = useState(1);
+  const [timeframe, setTimeframe] = useState(30);
 
   const [isFullRange, setIsFullRange] = useState(false);
   const [priceRangeMin, setPriceRangeMin] = useState(
@@ -75,7 +75,7 @@ export const EstimateEarningsPage = () => {
         // Calculer les dates de début et fin
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setDate(endDate.getDate() - timeframe);
+        startDate.setDate(endDate.getDate() - Number(QueryPeriodEnum.ONE_MONTH));
 
         // Charger les données de prix pour les deux tokens
         const [token0Prices, token1Prices] = await Promise.all([
@@ -104,7 +104,7 @@ export const EstimateEarningsPage = () => {
     };
 
     loadPriceData();
-  }, [currentPool, timeframe, chainId]);
+  }, [currentPool, chainId]);
 
   const liquidityConcentration = useMemo(() => {
     if (isFullRange) return 1;
@@ -269,7 +269,7 @@ export const EstimateEarningsPage = () => {
                 </h1>
                 <p className="text-gray-400">
                   {currentPool.token0.symbol} / {currentPool.token1.symbol} •
-                  Fee {(Number(currentPool.feeTier) * 100).toFixed(2)}%
+                  Fee {(Number(currentPool.feeTier) / 10000).toFixed(2)}%
                 </p>
               </div>
             </div>

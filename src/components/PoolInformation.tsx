@@ -15,21 +15,66 @@ export const PoolInformation = ({
     </div>
     <div className="space-y-2 text-sm">
       <div className="flex justify-between">
+        <span className="font-medium text-gray-600">Address:</span>
+        <span className="font-bold text-gray-800">
+          {currentPool.poolId.slice(0,6)}...{currentPool.poolId.slice(-6)}
+        </span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-medium text-gray-600">Tokens:</span>
+        <span className="font-bold text-gray-800">
+          {currentPool.token0.symbol} / {currentPool.token1.symbol}
+        </span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-medium text-gray-600">Fees tier:</span>
+        <span className="font-bold text-gray-800">
+          {((Number(currentPool?.feeTier) || 0) / 10000).toFixed(2)}%
+        </span>
+      </div>
+      <hr/>
+      <div className="flex justify-between">
         <span className="font-medium text-gray-600">TVL:</span>
         <span className="font-bold text-gray-800">
-          ${currentPool?.totalValueLockedUSD?.toLocaleString() || "N/A"}
+          ${Number(currentPool?.totalValueLockedUSD?.toFixed(0)).toLocaleString() || "N/A"}
         </span>
       </div>
       <div className="flex justify-between">
         <span className="font-medium text-gray-600">Volume 24h:</span>
         <span className="font-bold text-gray-800">
-          ${currentPool?.volume24h?.toLocaleString() || "N/A"}
+          ${Number(currentPool?.volume24h.toFixed(0))?.toLocaleString() || "N/A"}
+        </span>
+      </div>
+
+      <div className="flex justify-between">
+        <span className="font-medium text-gray-600">
+          Daily Volume / TVL:
+        </span>
+        <span className="font-bold text-gray-800">
+          {currentPool.dailyVolumePerTVL.toFixed(2)}%
         </span>
       </div>
       <div className="flex justify-between">
-        <span className="font-medium text-gray-600">Fees:</span>
+        <span className="font-medium text-gray-600">
+          Daily Fees / TVL:
+        </span>
         <span className="font-bold text-gray-800">
-          {((Number(currentPool?.feeTier) || 0) * 100).toFixed(3)}%
+          {currentPool.dailyFeesPerTVL.toFixed(4)}%
+        </span>
+      </div>
+            <div className="flex justify-between">
+        <span className="font-medium text-gray-600">
+          Fees 24h:
+        </span>
+        <span className="font-bold text-gray-800">
+          ${Number(currentPool.fee24h.toFixed(0)).toLocaleString() || "N/A"}
+        </span>
+      </div>
+      <hr />
+      <div className="flex justify-between">
+        <span className="font-medium text-gray-600">Price volatility:</span>
+        <span className="font-bold text-gray-800">
+          {currentPool.priceVolatility24HPercentage.toFixed(2)}%
         </span>
       </div>
     </div>
