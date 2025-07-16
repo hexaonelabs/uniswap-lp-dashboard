@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Search, ExternalLink, Star, BarChart3, Calculator } from "lucide-react";
+import {
+  Search,
+  ExternalLink,
+  Star,
+  BarChart3,
+  Calculator,
+} from "lucide-react";
 import { usePools } from "../hooks/usePools";
 import { useNavigate } from "react-router-dom";
 
@@ -60,7 +66,7 @@ import { useNavigate } from "react-router-dom";
 //                 return `<div style="padding: 5px">
 //                 <div style="margin-bottom: 5px">${new Date(
 //                   data.x
-//                 ).toDateString()}</div> 
+//                 ).toDateString()}</div>
 
 //                 <div><b>Open:</b> ${round(data.y[0], 6)}</div>
 //                 <div><b>High:</b> ${round(data.y[1], 6)}</div>
@@ -175,16 +181,14 @@ export const PoolSearch: React.FC = () => {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mb-8">
+      <div className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-8">
         <div className="flex items-center space-x-3 mb-6">
-          <div className="p-2 bg-green-100 rounded-lg">
-            <Search className="w-6 h-6 text-green-600" />
+          <div className="p-3 bg-green-100 rounded-xl backdrop-blur-sm">
+            <Search className="w-8 h-8 text-green-600" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-gray-800">
-              Best Pool Rewards
-            </h3>
-            <p className="text-gray-600">
+            <h3 className="text-3xl font-bold">Pool Rewards Explorer</h3>
+            <p className="text-white/90">
               Find the highest yielding pools across networks
             </p>
           </div>
@@ -200,7 +204,7 @@ export const PoolSearch: React.FC = () => {
                 placeholder="Search pools (e.g., USDC, ETH)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />
             </div>
           </div>
@@ -208,13 +212,11 @@ export const PoolSearch: React.FC = () => {
           <select
             value={selectedChain}
             onChange={(e) => setSelectedChain(e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
           >
             <option value="all">All Chains</option>
-            <option value="1">Ethereum</option>
-            <option value="137">Polygon</option>
             <option value="42161">Arbitrum</option>
-            <option value="10">Optimism</option>
+            <option value="8453">Base</option>
           </select>
 
           <select
@@ -222,12 +224,33 @@ export const PoolSearch: React.FC = () => {
             onChange={(e) =>
               setSortBy(e.target.value as "apr" | "tvl" | "volume")
             }
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
           >
             <option value="apr">Highest APR</option>
             <option value="tvl">Highest TVL</option>
             <option value="volume">Highest Volume</option>
           </select>
+        </div>
+
+        <div className="flex items-center space-x-6 text-white/80">
+          <div className="flex items-center space-x-2">
+            <Star className="w-5 h-5" />
+            <span>
+              Over {pools.length} Pools
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Search className="w-5 h-5" />
+            <span>
+              Advenced search and filters
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Calculator className="w-5 h-5" />
+            <span>
+              Yield calculator
+            </span>
+          </div>
         </div>
       </div>
 
@@ -300,15 +323,16 @@ export const PoolSearch: React.FC = () => {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <button 
+                  <button
                     className="flex items-center space-x-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
                     onClick={() => {
-                      navigate(`/estimate?chainId=${pool.chain.id}&poolAddress=${pool.poolId}`);
-                    }} >
+                      navigate(
+                        `/estimate?chainId=${pool.chain.id}&poolAddress=${pool.poolId}`
+                      );
+                    }}
+                  >
                     <Calculator className="w-4 h-4" />
-                    <span>
-                      Estimate earnings
-                    </span>
+                    <span>Estimate earnings</span>
                   </button>
                   <button className="p-1.5 text-gray-500 hover:text-gray-700 transition-colors">
                     <ExternalLink className="w-4 h-4" />
