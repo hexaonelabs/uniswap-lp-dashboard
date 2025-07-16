@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from "react";
-import {
-  Search,
-  ExternalLink,
-  Star,
-  Calculator,
-} from "lucide-react";
+import { Search, ExternalLink, Star, Calculator } from "lucide-react";
 import { usePools } from "../hooks/usePools";
 import { useNavigate } from "react-router-dom";
+import { TokenSymbolsGroup } from "../components/TokenSymbolsGroup";
 
 // const CandleStickChart = ({ data }: { data: PoolColumnDataType }) => {
 //   const [isLoading, setIsLoading] = useState(true);
@@ -181,7 +177,6 @@ export const PoolSearchPage: React.FC = () => {
   return (
     <>
       <div className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-8">
-        
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-3 bg-green-100 rounded-xl backdrop-blur-sm">
             <Search className="w-8 h-8 text-green-600" />
@@ -232,24 +227,18 @@ export const PoolSearchPage: React.FC = () => {
           </select>
         </div>
 
-        <div className="flex items-center text-white/80">
+        <div className="flex flex-col sm:flex-row sm:items-center text-white/80 space-y-2 sm:space-y-0 sm:space-x-2 text-sm">
           <div className="flex items-center space-x-2">
             <Star className="w-5 h-5" />
-            <span>
-              Over {pools.length} Pools
-            </span>
+            <span>Over {pools.length} Pools</span>
           </div>
           <div className="flex items-center space-x-2">
             <Search className="w-5 h-5" />
-            <span>
-              Advenced search and filters
-            </span>
+            <span>Advenced search and filters</span>
           </div>
           <div className="flex items-center space-x-2">
             <Calculator className="w-5 h-5" />
-            <span>
-              Yield calculator
-            </span>
+            <span>Yield calculator</span>
           </div>
         </div>
       </div>
@@ -267,7 +256,7 @@ export const PoolSearchPage: React.FC = () => {
               key={pool.poolId + `_${i}`}
               className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden"
             >
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <img
@@ -312,6 +301,67 @@ export const PoolSearchPage: React.FC = () => {
                       TVL: {formatLargeNumber(pool.totalValueLockedUSD)}
                     </span>
                     <span>Vol: {formatLargeNumber(pool.volume24h)}</span>
+                  </div>
+                </div>
+              </div> */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  
+                  <TokenSymbolsGroup tokens={{
+                    token0: pool.token0,
+                    token1: pool.token1
+                  }} />
+
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-lg font-bold text-gray-800 truncate">
+                      {pool.token0.symbol}/{pool.token1.symbol}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                        {Number(pool.feeTier) / 10_000}% Fee
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <img
+                          src={pool.chain.logoURI}
+                          alt={pool.chain.name}
+                          className="w-4 h-4 rounded-full"
+                        />
+                        <span className="text-xs font-medium">
+                          {pool.chain.name}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:items-end space-y-2">
+                  <div className="flex items-center justify-between sm:justify-end w-full">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1 bg-yellow-100 rounded-full">
+                        <Star className="w-3 h-3 text-yellow-600" />
+                      </div>
+                      <span className="text-2xl font-bold text-green-600">
+                        {pool.apy}%
+                      </span>
+                      <span className="text-sm text-gray-500 font-medium">
+                        APR
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm w-full sm:w-auto">
+                    <div className="flex justify-between sm:block">
+                      <span className="text-gray-500">TVL:</span>
+                      <span className="font-semibold text-gray-700">
+                        {formatLargeNumber(pool.totalValueLockedUSD)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between sm:block">
+                      <span className="text-gray-500">Vol:</span>
+                      <span className="font-semibold text-gray-700">
+                        {formatLargeNumber(pool.volume24h)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

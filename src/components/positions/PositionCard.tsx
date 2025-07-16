@@ -11,6 +11,7 @@ import {
 import { Position } from "../../types";
 import { Calculator as CalculatorModal } from "../Calculator";
 import { useNavigate } from "react-router-dom";
+import { TokenSymbolsGroup } from "../TokenSymbolsGroup";
 
 interface PositionCardProps {
   position: Position;
@@ -56,9 +57,10 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
       <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden">
         <div className="p-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
+
+              {/* <div className="flex items-center space-x-2">
                 <img
                   src={position.token0.logoURI}
                   alt={position.token0.symbol}
@@ -69,7 +71,11 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
                   alt={position.token1.symbol}
                   className="w-10 h-10 rounded-full -ml-2"
                 />
-              </div>
+              </div> */}
+              <TokenSymbolsGroup tokens={{
+                token0: position.token0,
+                token1: position.token1
+              }} />
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">
                   {position.token0.symbol}/{position.token1.symbol}
@@ -96,7 +102,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
           </div>
 
           {/* Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
             <div className="text-center">
               <p className="text-sm text-gray-500">Total Value</p>
               <p className="text-lg font-semibold text-gray-800">
@@ -132,7 +138,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
           </div>
 
           {/* Price Range */}
-          <div className="mt-10 mb-12">
+          <div className="mt-8 mb-12">
             {/* <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-500">Price Range</span>
               <span className="text-sm text-gray-500">
