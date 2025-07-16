@@ -4,7 +4,7 @@ import {
   Navigate,
   useSearchParams
 } from "react-router";
-import { PoolSearch } from "./components/PoolSearch";
+import { PoolSearchPage } from "./pages/PoolSearch";
 import Footer from "./components/Footer";
 import { PositionsDashboardPage } from "./pages/PositionsDashboardPage";
 import { useEffect } from "react";
@@ -38,7 +38,6 @@ function App() {
   useEffect(() => {
     if (evmAddress ) {
       localStorage.setItem("evmAddress", evmAddress);
-      // navigate(`/dashboard?address=${evmAddress}`);
     }
   }, [evmAddress, pathname]);
 
@@ -60,7 +59,7 @@ function App() {
           <Routes>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<PositionsDashboardPage />} />
-            <Route path="explore" element={<PoolSearch />} />
+            <Route path="explore" element={<PoolSearchPage />} />
             <Route path="estimate" element={<EstimateEarningsPage />} />
             {/* <Route path="/analytics" element={<Chart data={mockChartData} />} /> */}
             <Route

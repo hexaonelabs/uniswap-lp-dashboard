@@ -54,7 +54,7 @@ export interface Token {
   balance: string;
 }
 
-export interface FilterOptions {
+export interface PositionsFilterOptions {
   status: "all" | "open" | "closed";
   range: "all" | "in" | "out";
   chain: string;

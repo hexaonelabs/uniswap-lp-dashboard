@@ -8,7 +8,7 @@ import {
   Search,
 } from "lucide-react";
 
-interface HeaderProps {
+interface PositionsHeaderProps {
   totalValue: number;
   totalFees: number;
   totalUnclaimedFees?: number;
@@ -22,7 +22,7 @@ interface HeaderProps {
   loading?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({
+export const PositionsHeader: React.FC<PositionsHeaderProps> = ({
   totalValue,
   totalFees,
   totalUnclaimedFees = 0,

@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { usePositions } from "../hooks/usePositions";
-import { FilterOptions, Position, TimeFilter } from "../types";
+import { Position, PositionsFilterOptions, TimeFilter } from "../types";
 import { validateAndResolveAddress } from "../data/data";
-import { Header } from "../components/Header";
-import { Filters } from "../components/Filters";
-import { PositionCard } from "../components/PositionCard";
+import { PositionsHeader } from "../components/positions/PositionsHeader";
+import { PositionCard } from "../components/positions/PositionCard";
+import { PositionsFilters } from "../components/positions/PositionsFilters";
 import { NETWORKS } from "../services/fetcher";
 
 const getTimeFilteredPositions = (
@@ -36,7 +36,7 @@ export const PositionsDashboardPage: React.FC = () => {
   const [evmAddress, setEvmAddress] = useState<string | undefined>(undefined);
   const { positions, loading, error } = usePositions(evmAddress || undefined);
 
-  const [filters, setFilters] = useState<FilterOptions>({
+  const [filters, setFilters] = useState<PositionsFilterOptions>({
     status: "open",
     range: "all",
     chain: "all",
@@ -239,7 +239,7 @@ export const PositionsDashboardPage: React.FC = () => {
 
   return (
     <>
-      <Header
+      <PositionsHeader
         {...stats}
         currentAddress={evmAddress || ""}
         onAddressChange={handleAddressChange}
@@ -251,7 +251,7 @@ export const PositionsDashboardPage: React.FC = () => {
         <TimeFilterSelector />
       </div>
 
-      <Filters
+      <PositionsFilters
         filters={filters}
         onFiltersChange={setFilters}
         chains={NETWORKS}

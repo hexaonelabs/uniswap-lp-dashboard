@@ -1,17 +1,17 @@
 import React from 'react';
 import { Filter, TrendingUp, TrendingDown, Calendar, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
-import { FilterOptions } from '../types';
-import { Network } from '../services/fetcher';
+import { PositionsFilterOptions } from '../../types';
+import { Network } from '../../services/fetcher';
 
-interface FiltersProps {
-  filters: FilterOptions;
-  onFiltersChange: (filters: FilterOptions) => void;
+interface PositionsFiltersProps {
+  filters: PositionsFilterOptions;
+  onFiltersChange: (filters: PositionsFilterOptions) => void;
   chains: Network[];
 }
 
-export const Filters: React.FC<FiltersProps> = ({ filters, onFiltersChange, chains }) => {
+export const PositionsFilters: React.FC<PositionsFiltersProps> = ({ filters, onFiltersChange, chains }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleFilterChange = (key: keyof FilterOptions, value: any) => {
+  const handleFilterChange = (key: keyof PositionsFilterOptions, value: any) => {
     const range = key === 'status' && value === 'closed' ? 'all' : filters.range;
     onFiltersChange({ ...filters, range, [key]: value });
   };

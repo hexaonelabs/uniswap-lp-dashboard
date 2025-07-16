@@ -8,8 +8,8 @@ import {
   Calculator,
   Eye,
 } from "lucide-react";
-import { Position } from "../types";
-import { Calculator as CalculatorModal } from "./Calculator";
+import { Position } from "../../types";
+import { Calculator as CalculatorModal } from "../Calculator";
 import { useNavigate } from "react-router-dom";
 
 interface PositionCardProps {

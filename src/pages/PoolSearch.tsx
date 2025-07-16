@@ -3,7 +3,6 @@ import {
   Search,
   ExternalLink,
   Star,
-  BarChart3,
   Calculator,
 } from "lucide-react";
 import { usePools } from "../hooks/usePools";
@@ -124,7 +123,7 @@ import { useNavigate } from "react-router-dom";
 //   );
 // };
 
-export const PoolSearch: React.FC = () => {
+export const PoolSearchPage: React.FC = () => {
   const { pools, loading: loading } = usePools();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"apr" | "tvl" | "volume">("apr");
@@ -182,6 +181,7 @@ export const PoolSearch: React.FC = () => {
   return (
     <>
       <div className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-8">
+        
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-3 bg-green-100 rounded-xl backdrop-blur-sm">
             <Search className="w-8 h-8 text-green-600" />
@@ -232,7 +232,7 @@ export const PoolSearch: React.FC = () => {
           </select>
         </div>
 
-        <div className="flex items-center space-x-6 text-white/80">
+        <div className="flex items-center text-white/80">
           <div className="flex items-center space-x-2">
             <Star className="w-5 h-5" />
             <span>
