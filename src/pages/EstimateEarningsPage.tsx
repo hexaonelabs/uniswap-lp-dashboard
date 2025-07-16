@@ -13,6 +13,7 @@ import { getPriceChart, QueryPeriodEnum } from "../services/coingecko";
 import { SimulationControlsPanel } from "../components/SimulationControlsSimulationControlsPanel";
 import { ChartPanel } from "../components/ChartPanel";
 import { MetricsCard } from "../components/MetricsCard";
+import { VolumeChart } from "../components/positions/VolumeChart";
 
 export const EstimateEarningsPage = () => {
   const [searchParams] = useSearchParams();
@@ -343,6 +344,13 @@ export const EstimateEarningsPage = () => {
             priceRangeMin={priceRangeMin}
             priceRangeMax={priceRangeMax}
             isFullRange={isFullRange}
+            token0={currentPool.token0}
+            token1={currentPool.token1}
+          />
+
+          {/* Volume Chart */}
+          <VolumeChart
+            poolDayDatas={currentPool.poolDayDatas}
           />
         </div>
       </div>

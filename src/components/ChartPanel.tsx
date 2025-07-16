@@ -7,6 +7,8 @@ export const ChartPanel = ({
   priceRangeMin,
   priceRangeMax,
   isFullRange,
+  token0,
+  token1,
 }: {
   correlationData: Array<{
     timestamp: number;
@@ -24,12 +26,18 @@ export const ChartPanel = ({
   priceRangeMin: number;
   priceRangeMax: number;
   isFullRange: boolean;
+  token0: {
+    symbol: string;
+  };
+  token1: {
+    symbol: string;
+  };
 }) => (
   <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
         <BarChart3 className="w-6 h-6 text-purple-500" />
-        Earnings Analysis
+        {token0.symbol} / {token1.symbol} Pool Chart
       </h3>
     </div>
 
