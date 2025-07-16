@@ -6,7 +6,6 @@ import {
   processPriceChartData,
 
 } from "../utils/math";
-import { PoolColumnDataType } from "../types";
 import D3CorrelationChart from "./D3CorrelationChart";
 
 
@@ -21,7 +20,18 @@ export interface CorrelationChartProps {
     priceAssumptionValue: number;
     priceRangeValue: number[];
     isFullRange: boolean;
-    pool?: PoolColumnDataType;
+    pool?: {
+      token0: {
+        priceUSD: number;
+        symbol: string;
+        decimals: number;
+      };
+      token1: {
+        priceUSD: number;
+        symbol: string;
+        decimals: number;
+      };
+    };
     token0?: { symbol: string; decimals: number } | null;
     token1?: { symbol: string; decimals: number } | null;
   }
@@ -96,7 +106,7 @@ const CorrelationChart = ({ state }: {state: CorrelationChartProps}) => {
   <div>
     Price: {Number(state.pool?.token0.priceUSD).toFixed(2)}{" "}
     {state.token0?.symbol} / {state.token1?.symbol}
-    <div ref={refElement} className="xxx" />
+    <div ref={refElement} />
 </div>
 
         <div>

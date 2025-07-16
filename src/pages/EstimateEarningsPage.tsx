@@ -62,11 +62,32 @@ export const EstimateEarningsPage = () => {
         Number(currentPool.token0.priceUSD) /
         Number(currentPool.token1.priceUSD);
       setCurrentPrice(price);
-      setPriceRangeMin(price * 0.95);
-      setPriceRangeMax(price * 1.05);
+      if (token0PriceData.length > 0 && token1PriceData.length > 0) {
+        setPriceRangeMin(price * 0.95);
+        setPriceRangeMax(price * 1.05);
+      }
     }
-  }, [currentPool]);
+  }, [currentPool, token0PriceData, token1PriceData]);
 
+  useEffect(() => {
+    if (token0PriceData.length > 0 && token1PriceData.length > 0) {
+      // Prendre les prix les plus récents des données CoinGecko
+      const latestToken0Price = token0PriceData[token0PriceData.length - 1]?.value;
+      const latestToken1Price = token1PriceData[token1PriceData.length - 1]?.value;
+      
+      if (latestToken0Price && latestToken1Price) {
+        const realCurrentPrice = latestToken0Price / latestToken1Price;
+        setCurrentPrice(realCurrentPrice);
+        
+        // Mettre à jour le range seulement si ce n'est pas déjà défini par l'utilisateur
+        if (priceRangeMin === 0 && priceRangeMax === 0) {
+          setPriceRangeMin(realCurrentPrice * 0.95);
+          setPriceRangeMax(realCurrentPrice * 1.05);
+        }
+      }
+    }
+  }, [token0PriceData, token1PriceData, priceRangeMin, priceRangeMax]);
+  
   useEffect(() => {
     const loadPriceData = async () => {
       if (!currentPool) return;
@@ -117,50 +138,35 @@ export const EstimateEarningsPage = () => {
   const correlationData = useMemo(() => {
     if (!currentPool || token0PriceData.length === 0) return [];
 
-    // Créer un map des prix par timestamp pour faciliter la recherche
-    const token0PriceMap = new Map(
-      token0PriceData.map((p) => [p.timestamp, p.value])
-    );
-    const token1PriceMap = new Map(
-      token1PriceData.map((p) => [p.timestamp, p.value])
-    );
+    const data = [];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - timeframe);
 
-    return Array.from({ length: timeframe }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (timeframe - i));
-      const timestamp = date.getTime();
+    // Calculer le prix relatif ACTUEL pour la référence
+    const currentRelativePrice = token0PriceData.length > 0 && token1PriceData.length > 0 
+      ? token0PriceData[token0PriceData.length - 1].value / token1PriceData[token1PriceData.length - 1].value
+      : Number(currentPool.token0.priceUSD) / Number(currentPool.token1.priceUSD);
 
-      // Trouver le prix le plus proche dans le temps
-      const findClosestPrice = (
-        priceMap: Map<number, number>,
-        targetTimestamp: number
-      ) => {
-        let closestTimestamp = 0;
-        let minDiff = Infinity;
+    // Mettre à jour currentPrice avec la valeur cohérente
+    if (currentPrice !== currentRelativePrice) {
+      setCurrentPrice(currentRelativePrice);
+    }
 
-        for (const ts of priceMap.keys()) {
-          const diff = Math.abs(ts - targetTimestamp);
-          if (diff < minDiff) {
-            minDiff = diff;
-            closestTimestamp = ts;
-          }
-        }
+    for (let i = 0; i < timeframe; i++) {
+            // Utiliser les indices en partant de la fin (données les plus récentes)
+      const token0Index = Math.max(0, token0PriceData.length - timeframe + i);
+      const token1Index = Math.max(0, token1PriceData.length - timeframe + i);
 
-        return priceMap.get(closestTimestamp) || 0;
-      };
-
-      const token0Price =
-        findClosestPrice(token0PriceMap, timestamp) ||
-        Number(currentPool.token0.priceUSD);
-      const token1Price =
-        findClosestPrice(token1PriceMap, timestamp) ||
-        Number(currentPool.token1.priceUSD);
+      const token0Price = token0PriceData[token0Index]?.value || token0PriceData[token0PriceData.length - 1]?.value || Number(currentPool.token0.priceUSD);
+      const token1Price = token1PriceData[token1Index]?.value || token1PriceData[token1PriceData.length - 1]?.value || Number(currentPool.token1.priceUSD);
 
       // Calculer le prix relatif (token0/token1)
-      const relativePrice =
-        token1Price > 0 ? token0Price / token1Price : currentPrice;
+      const relativePrice = token1Price > 0 ? token0Price / token1Price : currentRelativePrice;
+      
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      const timestamp = date.getTime();
 
-      // Utiliser les données historiques réelles du pool pour le volume
       const dayIndex = Math.min(i, currentPool.poolDayDatas.length - 1);
       const poolDayData =
         currentPool.poolDayDatas[dayIndex] || currentPool.poolDayDatas[0];
@@ -187,24 +193,21 @@ export const EstimateEarningsPage = () => {
           liquidityAmount *
           0.1;
 
-      return {
+      data.push({
         timestamp,
         date: date.toLocaleDateString(),
         fees: estimatedFees,
-        impermanentLoss: Math.min(0, -Math.abs(impermanentLoss)), // IL est toujours négatif
+        impermanentLoss: Math.min(0, -Math.abs(impermanentLoss)),
         netEarnings: estimatedFees + Math.min(0, -Math.abs(impermanentLoss)),
-        apy:
-          ((estimatedFees + Math.min(0, -Math.abs(impermanentLoss))) /
-            liquidityAmount) *
-          (365 / timeframe) *
-          100,
+        apy: ((estimatedFees + Math.min(0, -Math.abs(impermanentLoss))) / liquidityAmount) * (365 / timeframe) * 100,
         price0: token0Price,
         price1: token1Price,
         relativePrice,
         volume: dailyVolume,
         tvl: currentPool.totalValueLockedUSD,
-      };
-    });
+      });
+    }
+    return data;
   }, [
     currentPool,
     liquidityAmount,

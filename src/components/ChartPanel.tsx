@@ -19,6 +19,7 @@ export const ChartPanel = ({
     apy: number;
     price0: number;
     price1: number;
+    relativePrice: number; // Ajouter cette propriété
     volume: number;
     tvl: number;
   }>;
@@ -28,9 +29,11 @@ export const ChartPanel = ({
   isFullRange: boolean;
   token0: {
     symbol: string;
+    decimals: number;
   };
   token1: {
     symbol: string;
+    decimals: number;
   };
 }) => (
   <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
@@ -47,18 +50,32 @@ export const ChartPanel = ({
           token0PriceChart: {
             prices: correlationData.map((data) => ({
               timestamp: data.timestamp,
-              value: data.price0,
+              value: data.relativePrice, // Utiliser relativePrice au lieu de price0
             })),
           },
           token1PriceChart: {
             prices: correlationData.map((data) => ({
               timestamp: data.timestamp,
-              value: data.price1,
+              value: 1, // Token1 est la référence (toujours 1 dans le ratio)
             })),
           },
           priceAssumptionValue: currentPrice,
           priceRangeValue: [priceRangeMin, priceRangeMax],
           isFullRange: isFullRange,
+          token0: token0,
+          token1: token1,
+          pool: {
+            token0: {
+              symbol: token0.symbol,
+              decimals: token0.decimals,
+              priceUSD: currentPrice, // Utiliser le prix actuel pour le token0
+            },
+            token1: {
+              symbol: token1.symbol,
+              decimals: token1.decimals,
+              priceUSD: 1, // Token1 est la référence (toujours 1 dans le ratio)
+            },
+          },
         }}
       />
     </div>
