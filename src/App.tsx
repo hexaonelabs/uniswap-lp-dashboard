@@ -4,7 +4,7 @@ import {
   Navigate,
   useSearchParams
 } from "react-router";
-import { PoolSearchPage } from "./pages/PoolSearch";
+import { PoolSearchPage } from "./pages/PoolSearchPage";
 import Footer from "./components/Footer";
 import { PositionsDashboardPage } from "./pages/PositionsDashboardPage";
 import { useEffect } from "react";
