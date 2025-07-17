@@ -7,6 +7,11 @@ import { PositionsHeader } from "../components/positions/PositionsHeader";
 import { PositionCard } from "../components/positions/PositionCard";
 import { PositionsFilters } from "../components/positions/PositionsFilters";
 import { NETWORKS } from "../services/fetcher";
+import {
+  PortfolioYieldChart,
+  YieldChartData,
+} from "../components/PortfolioYieldChart";
+import { TrendingUp } from "lucide-react";
 
 const getTimeFilteredPositions = (
   positions: Position[],
@@ -28,6 +33,59 @@ const getTimeFilteredPositions = (
     const positionDate = new Date(position.createdAt).getTime();
     return positionDate >= cutoffTime;
   });
+};
+
+const convertPositionsToPortfolioData = (
+  positions: Position[]
+): YieldChartData => {
+  if (positions.length === 0) {
+    return {
+      totalDailyEarnings: 0,
+      totalMonthlyEarnings: 0,
+      totalYearlyEarnings: 0,
+      averageAPR: 0,
+      positions: [],
+    };
+  }
+
+  // Calculer le total de la valeur du portfolio
+  const totalValue = positions.reduce((sum, pos) => sum + pos.totalValueUSD, 0);
+
+  // Calculer les gains quotidiens estimés basés sur l'APR et la valeur
+  const totalDailyEarnings = positions.reduce((sum, pos) => {
+    const dailyAPR = pos.apr / 365 / 100; // Convertir APR annuel en taux quotidien
+    return sum + pos.totalValueUSD * dailyAPR;
+  }, 0);
+
+  // Calculer l'APR moyen pondéré par la valeur
+  const weightedAPR = positions.reduce((sum, pos) => {
+    const weight = pos.totalValueUSD / totalValue;
+    return sum + pos.apr * weight;
+  }, 0);
+
+  // Convertir les positions pour le graphique
+  const chartPositions = positions.map((position) => {
+    const dailyEarnings = position.feesEarnedUSD;
+
+    return {
+      id: position.id,
+      symbol: `${position.token0.symbol}/${position.token1.symbol}`,
+      apr: position.apr,
+      dailyEarnings: dailyEarnings,
+      liquidityAmount: position.totalValueUSD,
+      allocation: (position.totalValueUSD / totalValue) * 100,
+      chainName: position.chain.name,
+      feeTier: position.feeTier,
+    };
+  });
+
+  return {
+    totalDailyEarnings,
+    totalMonthlyEarnings: totalDailyEarnings * 30,
+    totalYearlyEarnings: totalDailyEarnings * 365,
+    averageAPR: weightedAPR,
+    positions: chartPositions,
+  };
 };
 
 export const PositionsDashboardPage: React.FC = () => {
@@ -121,7 +179,9 @@ export const PositionsDashboardPage: React.FC = () => {
 
     const totalDeposited = filteredPositions.reduce(
       (sum, p) =>
-        sum + (Number(p.depositedToken0) * p.token0.priceUSD) + (Number(p.depositedToken1) * p.token1.priceUSD),
+        sum +
+        Number(p.depositedToken0) * p.token0.priceUSD +
+        Number(p.depositedToken1) * p.token1.priceUSD,
       0
     );
 
@@ -148,6 +208,14 @@ export const PositionsDashboardPage: React.FC = () => {
       totalProjection24hUSD,
     };
   }, [filteredPositions]);
+
+  const portfolioAnalyticsData = useMemo(() => {
+    return {
+      ...convertPositionsToPortfolioData(filteredPositions),
+      hideTimeline: true,
+    };
+  }, [filteredPositions]);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
     const loadAddress = async () => {
@@ -252,21 +320,52 @@ export const PositionsDashboardPage: React.FC = () => {
         loading={loading}
       />
 
-      <div className="w-full lg:w-auto mb-4">
-        <TimeFilterSelector />
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <div className="w-full lg:w-auto">
+          <TimeFilterSelector />
+        </div>
+
+        {/* Toggle Analytics Button */}
+        {filteredPositions.length > 0 && (
+          <button
+            onClick={() => setShowAnalytics(!showAnalytics)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium ${
+              showAnalytics
+                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>{showAnalytics ? "Hide Analytics" : "Show Analytics"}</span>
+          </button>
+        )}
       </div>
 
-      <PositionsFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        chains={NETWORKS}
-      />
+      {/* Analytics Panel */}
+      {showAnalytics && filteredPositions.length > 0 && (
+        <div className="mb-8">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="p-6">
+              <PortfolioYieldChart data={portfolioAnalyticsData} />
+            </div>
+          </div>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {filteredPositions.map((position) => (
-          <PositionCard key={position.id} position={position} />
-        ))}
-      </div>
+      {!showAnalytics && filteredPositions.length > 0 && (
+        <>
+          <PositionsFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            chains={NETWORKS}
+          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {filteredPositions.map((position) => (
+              <PositionCard key={position.id} position={position} />
+            ))}
+          </div>
+        </>
+      )}
 
       {filteredPositions.length === 0 && loading === false && (
         <div className="text-center py-16">

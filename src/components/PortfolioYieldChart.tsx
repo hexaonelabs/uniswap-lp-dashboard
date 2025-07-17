@@ -12,7 +12,7 @@ import {
   DollarSign,
 } from "lucide-react";
 
-interface YieldChartData {
+export interface YieldChartData {
   totalDailyEarnings: number;
   totalMonthlyEarnings: number;
   totalYearlyEarnings: number;
@@ -27,6 +27,7 @@ interface YieldChartData {
     chainName: string;
     feeTier: number;
   }>;
+  hideTimeline?: boolean;
 }
 
 interface PortfolioYieldChartProps {
@@ -264,7 +265,7 @@ export const PortfolioYieldChart: React.FC<PortfolioYieldChartProps> = ({
     [data.positions]
   );
 
-  // Données simulées pour la timeline (30 derniers jours)
+  // Données pour la timeline (30 derniers jours)
   const timelineData = useMemo(() => {
     return Array.from({ length: 30 }, (_, i) => {
       const date = new Date();
@@ -273,7 +274,6 @@ export const PortfolioYieldChart: React.FC<PortfolioYieldChartProps> = ({
       const baseEarnings = data.totalDailyEarnings;
       const variation = (Math.random() - 0.5) * 0.3;
       const dailyEarnings = baseEarnings * (1 + variation);
-
       return {
         x: date.getTime(),
         y: Number(dailyEarnings.toFixed(2)),
@@ -410,12 +410,14 @@ export const PortfolioYieldChart: React.FC<PortfolioYieldChartProps> = ({
             label="Performance"
             isActive={activeView === "performance"}
           />
-          <ViewButton
-            view="timeline"
-            icon={TrendingUp}
-            label="Timeline"
-            isActive={activeView === "timeline"}
-          />
+          {!data.hideTimeline && (
+            <ViewButton
+              view="timeline"
+              icon={TrendingUp}
+              label="Timeline"
+              isActive={activeView === "timeline"}
+            />
+          )}
         </div>
       </div>
 
@@ -497,7 +499,7 @@ export const PortfolioYieldChart: React.FC<PortfolioYieldChartProps> = ({
                 Position Details
               </h5>
               <div className="space-y-3">
-                {data.positions.map((position, index) => (
+                {data.positions.sort((a, b) => b.allocation - a.allocation).map((position, index) => (
                   <div
                     key={position.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
