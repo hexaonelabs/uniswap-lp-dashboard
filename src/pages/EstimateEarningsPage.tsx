@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePools } from "../hooks/usePools";
 import { motion } from "framer-motion";
 import {
@@ -9,6 +9,7 @@ import {
   Clock,
   Calculator,
   ExternalLink,
+  PlusCircle,
 } from "lucide-react";
 import { getPriceChart, QueryPeriodEnum } from "../services/coingecko";
 import { SimulationControlsPanel } from "../components/SimulationControlsSimulationControlsPanel";
@@ -107,6 +108,7 @@ export const calculateAPY = (
 };
 
 export const EstimateEarningsPage = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const chainId = searchParams.get("chainId");
   const poolAddress = searchParams.get("poolAddress");
@@ -392,6 +394,74 @@ export const EstimateEarningsPage = () => {
     loadPriceData();
   }, [currentPool, chainId]);
 
+  const addToPortfolio = () => {
+    if (!currentPool || !chain) return;
+
+    // Calculer les métriques actuelles
+    const dailyEarnings = totalEarnings / 30;
+    const estimatedAPR = ((totalEarnings / liquidityAmount) * 12 * 100);
+
+    // Créer l'objet position
+    const newPosition = {
+      id: `${currentPool.poolId}_${chainId}_${Date.now()}`,
+      poolId: currentPool.poolId,
+      chainId: Number(chainId),
+      token0: {
+        symbol: currentPool.token0.symbol,
+        logoURI: currentPool.token0.logoURI,
+        address: currentPool.token0.address,
+        decimals: currentPool.token0.decimals,
+        priceUSD: currentPool.token0.priceUSD,
+      },
+      token1: {
+        symbol: currentPool.token1.symbol,
+        logoURI: currentPool.token1.logoURI,
+        address: currentPool.token1.address,
+        decimals: currentPool.token1.decimals,
+        priceUSD: currentPool.token1.priceUSD,
+      },
+      feeTier: Number(currentPool.feeTier),
+      liquidityAmount,
+      estimatedAPR,
+      daily24hProjectionUSD: dailyEarnings,
+      chainName: chain.name,
+      chainLogoURI: chain.logoURI,
+      priceRangeMin: isFullRange ? undefined : priceRangeMin,
+      priceRangeMax: isFullRange ? undefined : priceRangeMax,
+      isFullRange,
+      addedAt: Date.now(),
+    };
+
+    // Récupérer les positions existantes
+    const existingPositions = JSON.parse(
+      localStorage.getItem("lp_portfolio_positions") || "[]"
+    );
+
+    // Vérifier si la position existe déjà (même pool, même chaîne, même range)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existingIndex = existingPositions.findIndex((pos: any) => 
+      pos.poolId === newPosition.poolId && 
+      pos.chainId === newPosition.chainId &&
+      pos.isFullRange === newPosition.isFullRange &&
+      pos.priceRangeMin === newPosition.priceRangeMin &&
+      pos.priceRangeMax === newPosition.priceRangeMax
+    );
+
+    if (existingIndex !== -1) {
+      // Mettre à jour la position existante
+      existingPositions[existingIndex] = newPosition;
+    } else {
+      // Ajouter la nouvelle position
+      existingPositions.push(newPosition);
+    }
+
+    // Sauvegarder dans localStorage
+    localStorage.setItem("lp_portfolio_positions", JSON.stringify(existingPositions));
+
+    // Naviguer vers le portfolio builder
+    navigate("/builder");
+  };
+
   if (loading) {
     return (
       <div className="min-h-80 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center rounded-2xl shadow-xl mb-8">
@@ -490,42 +560,55 @@ export const EstimateEarningsPage = () => {
                 </p>
               </div>
 
-              {/* Right block - External links */}
+              {/* Right block */}
               <div className="flex flex-row gap-3 lg:flex-shrink-0">
-                <a
-                  href={`${chain?.blockExplorers?.default.url}/address/${poolAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2"
+                {/* Add to Portfolio Button */}
+                <button
+                  onClick={addToPortfolio}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
                 >
-                  <img
-                    src={ScanExplorerIcon}
-                    alt="Uniswap"
-                    className="w-4 h-4"
-                  />
-                </a>
+                  <PlusCircle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add to Portfolio</span>
+                  <span className="sm:hidden">Add</span>
+                </button>
 
-                <a
-                  href={`https://dexscreener.com/${chain?.keyMapper}/${poolAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2"
-                >
-                  <img
-                    src={DexScreenerIcon}
-                    alt="Uniswap"
-                    className="w-4 h-4"
-                  />
-                </a>
+                {/* External Links */}
+                <div className="flex gap-3">
+                  <a
+                    href={`${chain?.blockExplorers?.default.url}/address/${poolAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors duration-200"
+                  >
+                    <img
+                      src={ScanExplorerIcon}
+                      alt="Block Explorer"
+                      className="w-4 h-4"
+                    />
+                  </a>
 
-                <a
-                  href={`https://app.uniswap.org/explore/pools/${chain?.keyMapper}/${poolAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2"
-                >
-                  <ExternalLink className="w-4 h-4 text-pink-400" />
-                </a>
+                  <a
+                    href={`https://dexscreener.com/${chain?.keyMapper}/${poolAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors duration-200"
+                  >
+                    <img
+                      src={DexScreenerIcon}
+                      alt="DexScreener"
+                      className="w-4 h-4"
+                    />
+                  </a>
+
+                  <a
+                    href={`https://app.uniswap.org/explore/pools/${chain?.keyMapper}/${poolAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors duration-200"
+                  >
+                    <ExternalLink className="w-4 h-4 text-pink-400" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>

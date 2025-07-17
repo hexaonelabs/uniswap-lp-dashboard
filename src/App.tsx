@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { NavMenu } from "./components/NavMenu";
 import { useLocation } from "react-router";
 import { EstimateEarningsPage } from "./pages/EstimateEarningsPage";
+import { LPPortfolioBuilderPage } from "./pages/LPPortfolioBuilderPage";
 // import { Chart } from "./components/Chart";
 
 export function ScrollToTop() {
@@ -61,6 +62,7 @@ function App() {
             <Route path="dashboard" element={<PositionsDashboardPage />} />
             <Route path="explore" element={<PoolSearchPage />} />
             <Route path="estimate" element={<EstimateEarningsPage />} />
+            <Route path="builder" element={<LPPortfolioBuilderPage />} />
             {/* <Route path="/analytics" element={<Chart data={mockChartData} />} /> */}
             <Route
               path="*"

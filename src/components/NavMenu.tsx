@@ -62,6 +62,12 @@ export function NavMenu({ linkToDashboard }: NavMenuProps) {
       label: "Estimate Earnings",
       shortLabel: "Estimate"
     },
+    {
+      to: "/builder",
+      icon: CalculatorIcon,
+      label: "LP Portfolio Builder",
+      shortLabel: "Builder"
+    }
     // {
     //   to: "/analytics",
     //   icon: AnalyticsIcon,
@@ -97,7 +103,7 @@ export function NavMenu({ linkToDashboard }: NavMenuProps) {
         ? `sm:py-1`
         : `sm:py-6`
     }`}>
-      <div className="w-full max-w-xl mx-auto px-4 sm:px-0">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-0">
         {/* Desktop Navigation */}
         <nav className={`hidden sm:block border border-gray-200/50 rounded-2xl p-2 shadow-lg transition-all duration-300 ${
           isScrolled 

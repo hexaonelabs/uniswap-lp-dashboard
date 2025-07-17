@@ -179,3 +179,37 @@ export interface ChartData {
   feesEarned: number;
   positions: number;
 }
+
+
+export interface PortfolioPosition {
+  id: string;
+  poolId: string;
+  chainId: number;
+  token0: {
+    symbol: string;
+    logoURI: string;
+    address: string;
+    decimals: number;
+    priceUSD: string;
+  };
+  token1: {
+    symbol: string;
+    logoURI: string;
+    address: string;
+    decimals: number;
+    priceUSD: string;
+  };
+  feeTier: number;
+  liquidityAmount: number;
+  estimatedAPR: number;
+  daily24hProjectionUSD: number;
+  chainName: string;
+  chainLogoURI: string;
+  priceRangeMin?: number;
+  priceRangeMax?: number;
+  isFullRange: boolean;
+  addedAt: number;
+}
+
+
+export const PORTFOLIO_STORAGE_KEY = "lp_portfolio_positions";
