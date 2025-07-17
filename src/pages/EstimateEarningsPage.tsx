@@ -147,86 +147,6 @@ export const EstimateEarningsPage = () => {
     return NETWORKS.find((n) => n.id === Number(chainId));
   }, [chainId]);
 
-  useEffect(() => {
-    if (
-      currentPool &&
-      currentPool.token0.priceUSD &&
-      currentPool.token1.priceUSD
-    ) {
-      const price =
-        Number(currentPool.token0.priceUSD) /
-        Number(currentPool.token1.priceUSD);
-      setCurrentPrice(price);
-      if (token0PriceData.length > 0 && token1PriceData.length > 0) {
-        setPriceRangeMin(price * 0.95);
-        setPriceRangeMax(price * 1.05);
-      }
-    }
-  }, [currentPool, token0PriceData, token1PriceData]);
-
-  useEffect(() => {
-    if (token0PriceData.length > 0 && token1PriceData.length > 0) {
-      // Prendre les prix les plus récents des données CoinGecko
-      const latestToken0Price =
-        token0PriceData[token0PriceData.length - 1]?.value;
-      const latestToken1Price =
-        token1PriceData[token1PriceData.length - 1]?.value;
-
-      if (latestToken0Price && latestToken1Price) {
-        const realCurrentPrice = latestToken0Price / latestToken1Price;
-        setCurrentPrice(realCurrentPrice);
-
-        // Mettre à jour le range seulement si ce n'est pas déjà défini par l'utilisateur
-        if (priceRangeMin === 0 && priceRangeMax === 0) {
-          setPriceRangeMin(realCurrentPrice * 0.95);
-          setPriceRangeMax(realCurrentPrice * 1.05);
-        }
-      }
-    }
-  }, [token0PriceData, token1PriceData, priceRangeMin, priceRangeMax]);
-
-  useEffect(() => {
-    const loadPriceData = async () => {
-      if (!currentPool) return;
-
-      setPriceDataLoading(true);
-      try {
-        // Calculer les dates de début et fin
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(
-          endDate.getDate() - Number(QueryPeriodEnum.ONE_MONTH)
-        );
-
-        // Charger les données de prix pour les deux tokens
-        const [token0Prices, token1Prices] = await Promise.all([
-          getPriceChart(
-            currentPool.token0.address,
-            Number(chainId),
-            QueryPeriodEnum.ONE_MONTH
-          ),
-          getPriceChart(
-            currentPool.token1.address,
-            Number(chainId),
-            QueryPeriodEnum.ONE_MONTH
-          ),
-        ]);
-
-        setToken0PriceData(token0Prices?.prices || []);
-        setToken1PriceData(token1Prices?.prices || []);
-      } catch (error) {
-        console.error("Erreur lors du chargement des données de prix:", error);
-        // Fallback vers les données existantes
-        setToken0PriceData([]);
-        setToken1PriceData([]);
-      } finally {
-        setPriceDataLoading(false);
-      }
-    };
-
-    loadPriceData();
-  }, [currentPool, chainId]);
-
   const liquidityConcentration = useMemo(() => {
     if (isFullRange) return 1;
     if (priceRangeMin >= priceRangeMax || currentPrice === 0) return 1;
@@ -342,10 +262,135 @@ export const EstimateEarningsPage = () => {
     return monthlyEarnings;
   }, [correlationData]);
 
+  const tokensDayDatas = useMemo(() => {
+    if (!currentPool || token0PriceData.length === 0 || token1PriceData.length === 0) {
+      return [];
+    }
+
+    const data: Array<{
+      token0Price: string | number;
+      token1Price: string | number;
+      date: number;
+      volumeUSD: string | number;
+    }> = [];
+
+    // Prendre la longueur minimale entre les données de prix et les données de pool
+    const maxLength = Math.min(
+      token0PriceData.length,
+      token1PriceData.length,
+      currentPool.poolDayDatas.length,
+      timeframe
+    );
+
+    for (let i = 0; i < maxLength; i++) {
+      // Utiliser les indices en partant de la fin pour avoir les données les plus récentes
+      const token0Index = Math.max(0, token0PriceData.length - maxLength + i);
+      const token1Index = Math.max(0, token1PriceData.length - maxLength + i);
+      const poolIndex = Math.max(0, currentPool.poolDayDatas.length - maxLength + i);
+
+      const token0Price = token0PriceData[token0Index]?.value || Number(currentPool.token0.priceUSD);
+      const token1Price = token1PriceData[token1Index]?.value || Number(currentPool.token1.priceUSD);
+      const poolDayData = currentPool.poolDayDatas[poolIndex];
+      const volumeUSD = poolDayData?.volumeUSD || currentPool.volume24h;
+
+      // Calculer la date correspondante
+      const date = token0PriceData[token0Index]?.timestamp || Date.now() - (maxLength - i) * 24 * 60 * 60 * 1000;
+
+      data.push({
+        token0Price: token0Price.toString(),
+        token1Price: token1Price.toString(),
+        date: Math.floor(date / 1000), // Convertir en timestamp Unix (secondes)
+        volumeUSD: volumeUSD.toString(),
+      });
+    }
+
+    return data;
+  }, [currentPool, token0PriceData, token1PriceData, timeframe]);
+
   // const avgAPY = useMemo(() => {
   //   const sum = correlationData.reduce((sum, data) => sum + data.apy, 0);
   //   return sum / correlationData.length || 0;
   // }, [correlationData]);
+
+  useEffect(() => {
+    if (
+      currentPool &&
+      currentPool.token0.priceUSD &&
+      currentPool.token1.priceUSD
+    ) {
+      const price =
+        Number(currentPool.token0.priceUSD) /
+        Number(currentPool.token1.priceUSD);
+      setCurrentPrice(price);
+      if (token0PriceData.length > 0 && token1PriceData.length > 0) {
+        setPriceRangeMin(price * 0.95);
+        setPriceRangeMax(price * 1.05);
+      }
+    }
+  }, [currentPool, token0PriceData, token1PriceData]);
+
+  useEffect(() => {
+    if (token0PriceData.length > 0 && token1PriceData.length > 0) {
+      // Prendre les prix les plus récents des données CoinGecko
+      const latestToken0Price =
+        token0PriceData[token0PriceData.length - 1]?.value;
+      const latestToken1Price =
+        token1PriceData[token1PriceData.length - 1]?.value;
+
+      if (latestToken0Price && latestToken1Price) {
+        const realCurrentPrice = latestToken0Price / latestToken1Price;
+        setCurrentPrice(realCurrentPrice);
+
+        // Mettre à jour le range seulement si ce n'est pas déjà défini par l'utilisateur
+        if (priceRangeMin === 0 && priceRangeMax === 0) {
+          setPriceRangeMin(realCurrentPrice * 0.95);
+          setPriceRangeMax(realCurrentPrice * 1.05);
+        }
+      }
+    }
+  }, [token0PriceData, token1PriceData, priceRangeMin, priceRangeMax]);
+
+  useEffect(() => {
+    const loadPriceData = async () => {
+      if (!currentPool) return;
+
+      setPriceDataLoading(true);
+      try {
+        // Calculer les dates de début et fin
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(
+          endDate.getDate() - Number(QueryPeriodEnum.ONE_MONTH)
+        );
+
+        // Charger les données de prix pour les deux tokens
+        const [token0Prices, token1Prices] = await Promise.all([
+          getPriceChart(
+            currentPool.token0.address,
+            Number(chainId),
+            QueryPeriodEnum.ONE_MONTH
+          ),
+          getPriceChart(
+            currentPool.token1.address,
+            Number(chainId),
+            QueryPeriodEnum.ONE_MONTH
+          ),
+        ]);
+
+        setToken0PriceData(token0Prices?.prices || []);
+        setToken1PriceData(token1Prices?.prices || []);
+      } catch (error) {
+        console.error("Erreur lors du chargement des données de prix:", error);
+        // Fallback vers les données existantes
+        setToken0PriceData([]);
+        setToken1PriceData([]);
+      } finally {
+        setPriceDataLoading(false);
+      }
+    };
+
+    loadPriceData();
+  }, [currentPool, chainId]);
 
   if (loading) {
     return (
@@ -585,6 +630,7 @@ export const EstimateEarningsPage = () => {
             setPriceRangeMax={setPriceRangeMax}
             liquidityConcentration={liquidityConcentration}
             currentPool={currentPool}
+            tokensDayDatas={tokensDayDatas}
           />
         </div>
 

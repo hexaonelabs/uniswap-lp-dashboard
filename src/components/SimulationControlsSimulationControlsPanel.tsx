@@ -17,6 +17,7 @@ export const SimulationControlsPanel = ({
   setPriceRangeMax,
   liquidityConcentration,
   currentPool,
+  tokensDayDatas = [],
 }: {
   liquidityAmount: number;
   setLiquidityAmount: (value: number) => void;
@@ -30,7 +31,13 @@ export const SimulationControlsPanel = ({
   priceRangeMax: number;
   setPriceRangeMax: (value: number) => void;
   liquidityConcentration: number;
-  currentPool: PoolColumnDataType; // Replace with actual type if available
+  currentPool: PoolColumnDataType;
+    tokensDayDatas?: Array<{
+    token0Price: string | number;
+    token1Price: string | number;
+    date: number;
+    volumeUSD: string | number;
+  }>;
 }) => (
   <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
     <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -82,7 +89,7 @@ export const SimulationControlsPanel = ({
         currentPool={currentPool}
       />
 
-      <PoolInformation currentPool={currentPool} />
+      <PoolInformation currentPool={currentPool} tokensDayDatas={tokensDayDatas} timeframe={14} />
     </div>
   </div>
 );
