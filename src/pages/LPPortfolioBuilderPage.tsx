@@ -14,6 +14,7 @@ import { TokenSymbolsGroup } from "../components/TokenSymbolsGroup";
 import { MetricsCard } from "../components/MetricsCard";
 import { useNavigate } from "react-router-dom";
 import { PORTFOLIO_STORAGE_KEY, PortfolioPosition } from "../types";
+import { PortfolioYieldChart } from "../components/PortfolioYieldChart";
 
 export const LPPortfolioBuilderPage: React.FC = () => {
   const [positions, setPositions] = useState<PortfolioPosition[]>([]);
@@ -91,6 +92,38 @@ export const LPPortfolioBuilderPage: React.FC = () => {
       totalYearlyEarnings: totalDailyEarnings * 365,
     };
   }, [positions, totalInvestment]);
+
+  const yieldChartData = useMemo(() => {
+    if (positions.length === 0) {
+      return {
+        totalDailyEarnings: 0,
+        totalMonthlyEarnings: 0,
+        totalYearlyEarnings: 0,
+        averageAPR: 0,
+        positions: [],
+      };
+    }
+
+    const chartPositions = positions.map((position) => ({
+      id: position.id,
+      symbol: `${position.token0.symbol}/${position.token1.symbol}`,
+      apr: position.estimatedAPR,
+      dailyEarnings: position.daily24hProjectionUSD,
+      liquidityAmount: position.liquidityAmount,
+      allocation: (position.liquidityAmount / totalInvestment) * 100,
+      chainName: position.chainName,
+      feeTier: position.feeTier,
+    }));
+
+    return {
+      totalDailyEarnings: portfolioMetrics.totalDailyEarnings,
+      totalMonthlyEarnings: portfolioMetrics.totalMonthlyEarnings,
+      totalYearlyEarnings: portfolioMetrics.totalYearlyEarnings,
+      averageAPR: portfolioMetrics.averageAPR,
+      positions: chartPositions,
+    };
+  }, [positions, totalInvestment, portfolioMetrics]);
+
 
   const formatLargeNumber = (num: number) => {
     if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
@@ -409,13 +442,6 @@ export const LPPortfolioBuilderPage: React.FC = () => {
         {/* Chart Panel */}
         <div className="xl:col-span-2">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Portfolio Analytics</h3>
-              <p className="text-gray-600 text-sm">
-                Visualize your portfolio performance and allocation
-              </p>
-            </div>
-
             <div className="p-6">
               {positions.length === 0 ? (
                 <div className="text-center py-16 text-gray-500">
@@ -426,15 +452,7 @@ export const LPPortfolioBuilderPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="min-h-96 flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium">Chart Panel Ready</p>
-                    <p className="text-sm text-gray-400">
-                      Portfolio visualization will be implemented here
-                    </p>
-                  </div>
-                </div>
+                <PortfolioYieldChart data={yieldChartData} />
               )}
             </div>
           </div>
