@@ -112,7 +112,7 @@ export const LPPortfolioBuilderPage: React.FC = () => {
               <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
                 LP Portfolio Builder
               </h1>
-              <p className="text-gray-400 mt-1">
+              <p className="text-gray-200 mt-1">
                 Build and analyze your liquidity provider portfolio across multiple pools
               </p>
             </div>

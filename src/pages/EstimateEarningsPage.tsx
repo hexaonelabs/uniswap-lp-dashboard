@@ -10,6 +10,9 @@ import {
   Calculator,
   ExternalLink,
   PlusCircle,
+  ArrowRight,
+  Search,
+  Sparkles,
 } from "lucide-react";
 import { getPriceChart, QueryPeriodEnum } from "../services/coingecko";
 import { SimulationControlsPanel } from "../components/SimulationControlsSimulationControlsPanel";
@@ -474,19 +477,22 @@ export const EstimateEarningsPage = () => {
     );
   }
 
-  if (!currentPool) {
-    return (
-      <div className="min-h-80 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center rounded-2xl shadow-xl mb-8">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🔍</div>
-          <h2 className="text-2xl font-bold text-white mb-2">Pool not found</h2>
-          <p className="text-gray-400">
-            The pool you are looking for does not exist or is not available on
-            this chain.
-          </p>
-        </div>
-      </div>
-    );
+  // if (!currentPool) {
+  //   return (
+  //     <div className="min-h-80 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center rounded-2xl shadow-xl mb-8">
+  //       <div className="text-center">
+  //         <div className="text-6xl mb-4">🔍</div>
+  //         <h2 className="text-2xl font-bold text-white mb-2">Pool not found</h2>
+  //         <p className="text-gray-400">
+  //           The pool you are looking for does not exist or is not available on
+  //           this chain.
+  //         </p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+  if (!currentPool || !poolAddress || !chainId) {
+    return (<DefaultPreviewPage />)
   }
 
   return (
@@ -524,7 +530,7 @@ export const EstimateEarningsPage = () => {
                           e.currentTarget.src = `https://via.placeholder.com/40/8b5cf6/ffffff?text=${currentPool.token1.symbol[0]}`;
                         }}
                       />
-                      <p className="text-gray-400 ml-2">
+                      <p className="text-gray-200 ml-2">
                         {currentPool.token0.symbol} /{" "}
                         {currentPool.token1.symbol} • Fee{" "}
                         {(Number(currentPool.feeTier) / 10000).toFixed(2)}% •{" "}
@@ -736,3 +742,196 @@ export const EstimateEarningsPage = () => {
     </div>
   );
 };
+
+
+const DefaultPreviewPage = () => {
+    const navigate = useNavigate();
+      return (
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 rounded-2xl shadow-xl">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
+                  <Calculator className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    Estimate Earnings
+                  </h1>
+                  <p className="text-gray-200 mt-1">
+                    Calculate potential returns for liquidity providing positions
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Empty State Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <DollarSign className="w-8 h-8 text-gray-400" />
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-500">
+                      $--
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      24h Estimated Earnings
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <MetricsCard
+                icon={TrendingUp}
+                title="Average APY"
+                value="--"
+                color="text-gray-400"
+                subtitle="Select a pool to see estimates"
+              />
+              
+              <MetricsCard
+                icon={Settings}
+                title="Liquidity Amount"
+                value="--"
+                color="text-gray-400"
+                subtitle="Configure your position size"
+              />
+              
+              <MetricsCard
+                icon={Clock}
+                title="Timeframe"
+                value="--"
+                color="text-gray-400"
+                subtitle="Historical analysis period"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Empty State Content */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="p-12 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="max-w-2xl mx-auto"
+            >
+              {/* Icon */}
+              <div className="mb-8">
+                <div className="relative inline-block">
+                  <div className="p-6 bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl">
+                    <Calculator className="w-16 h-16 text-purple-600" />
+                  </div>
+                  <motion.div
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0]
+                    }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="absolute -top-2 -right-2"
+                  >
+                    <Sparkles className="w-8 h-8 text-yellow-500" />
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Title */}
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                Ready to Calculate Your LP Returns?
+              </h2>
+              
+              {/* Description */}
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                Get detailed earnings estimates for any Uniswap V3 liquidity position. 
+                Analyze historical performance, optimize your price ranges, and make informed investment decisions.
+              </p>
+
+              {/* Features */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div className="text-left p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800">APY Calculation</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Calculate realistic returns based on historical volume and fee data
+                  </p>
+                </div>
+
+                <div className="text-left p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-pink-100 rounded-lg">
+                      <Settings className="w-5 h-5 text-pink-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800">Range Optimization</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Test different price ranges and see their impact on your earnings
+                  </p>
+                </div>
+
+                <div className="text-left p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Clock className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800">Historical Analysis</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Analyze performance over different time periods and market conditions
+                  </p>
+                </div>
+
+                <div className="text-left p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-emerald-100 rounded-lg">
+                      <DollarSign className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800">Fee Projections</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Get detailed breakdowns of fee earnings and portfolio impact
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => navigate('/explore')}
+                  className="flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium text-lg"
+                >
+                  <Search className="w-5 h-5" />
+                  <span>Explore Pools</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={() => navigate('/builder')}
+                  className="flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-purple-200 text-purple-700 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 font-medium text-lg"
+                >
+                  <span>View Portfolio Builder</span>
+                </button>
+              </div>
+
+              {/* Bottom hint */}
+              <div className="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <p className="text-sm text-blue-700">
+                  💡 <strong>Pro tip:</strong> Start by exploring high-volume pools for more stable earnings estimates
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    );
+}
