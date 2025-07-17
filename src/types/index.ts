@@ -31,6 +31,7 @@ export interface Position {
   feeTier: number;
   createdAt: string;
   lastUpdated: string;
+  amountDepositedUSD: number;
   totalValueUSD: number;
   feesEarnedUSD: number;
   unClaimedFees: {

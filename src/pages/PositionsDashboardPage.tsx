@@ -118,9 +118,13 @@ export const PositionsDashboardPage: React.FC = () => {
       (sum, p) => sum + (p.feesEarnedUSD * p.apr) / 365,
       0
     );
-    // const totalAPR = totalValue > 0
-    //   ? (totalProjection24hUSD / totalValue) * 100
-    //   : 0;
+
+    const totalDeposited = filteredPositions.reduce(
+      (sum, p) =>
+        sum + (Number(p.depositedToken0) * p.token0.priceUSD) + (Number(p.depositedToken1) * p.token1.priceUSD),
+      0
+    );
+
     function calculateAPR(totalValue: number, dailyFees: number): number {
       const daysInYear = 365;
       const annualFees = dailyFees * daysInYear;
@@ -137,6 +141,7 @@ export const PositionsDashboardPage: React.FC = () => {
       totalValue,
       totalFees,
       totalUnclaimedFees,
+      totalDeposited,
       activePositions: activePositions.length,
       inRangePositions: inRangePositions.length,
       totalAPR,
@@ -247,7 +252,7 @@ export const PositionsDashboardPage: React.FC = () => {
         loading={loading}
       />
 
-      <div className="w-full lg:w-auto">
+      <div className="w-full lg:w-auto mb-4">
         <TimeFilterSelector />
       </div>
 

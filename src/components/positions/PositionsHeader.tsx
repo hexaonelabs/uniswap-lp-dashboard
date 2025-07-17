@@ -11,6 +11,7 @@ import {
 interface PositionsHeaderProps {
   totalValue: number;
   totalFees: number;
+  totalDeposited: number; 
   totalUnclaimedFees?: number;
   totalProjection24hUSD?: number;
   activePositions: number;
@@ -26,6 +27,7 @@ export const PositionsHeader: React.FC<PositionsHeaderProps> = ({
   totalValue,
   totalFees,
   totalUnclaimedFees = 0,
+  totalDeposited = 0,
   inRangePositions = 0,
   totalProjection24hUSD = 0,
   activePositions,
@@ -128,14 +130,17 @@ export const PositionsHeader: React.FC<PositionsHeaderProps> = ({
             <div className="p-2 bg-blue-500/20 rounded-lg">
               <DollarSign className="w-6 h-6 text-blue-300" />
             </div>
-            <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">
+            {/* <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">
               +2.4%
-            </span>
+            </span> */}
           </div>
           <div>
             <p className="text-blue-200 text-sm">Total Value</p>
             <p className="text-2xl font-bold">
               ${totalValue.toFixed(2).toLocaleString()}
+            </p>
+            <p className="text-xs text-blue-200 mt-1">
+              Deposits: ${totalDeposited.toFixed(2).toLocaleString()}
             </p>
           </div>
         </div>

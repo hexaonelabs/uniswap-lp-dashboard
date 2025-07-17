@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, ExternalLink, Star, Calculator } from "lucide-react";
+import { Search, Star, Calculator } from "lucide-react";
 import { usePools } from "../hooks/usePools";
 import { useNavigate } from "react-router-dom";
 import { TokenSymbolsGroup } from "../components/TokenSymbolsGroup";
@@ -122,7 +122,7 @@ import { TokenSymbolsGroup } from "../components/TokenSymbolsGroup";
 export const PoolSearchPage: React.FC = () => {
   const { pools, loading: loading } = usePools();
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"apr" | "tvl" | "volume">("apr");
+  const [sortBy, setSortBy] = useState<"apr" | "tvl" | "volume" | "24hfee" | "dailyfeestvl" | "dailyvolumtvl">("tvl");
   const [selectedChain, setSelectedChain] = useState("all");
   const [maxPools, setMaxPools] = useState(10);
   const navigate = useNavigate();
@@ -131,7 +131,8 @@ export const PoolSearchPage: React.FC = () => {
     .filter((pool) => {
       const matchesSearch =
         pool.token0.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pool.token1.symbol.toLowerCase().includes(searchTerm.toLowerCase());
+        pool.token1.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${pool.token0.symbol}/${pool.token1.symbol}`.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesChain =
         selectedChain === "all" || pool.chain.id.toString() === selectedChain;
@@ -146,6 +147,12 @@ export const PoolSearchPage: React.FC = () => {
           return b.totalValueLockedUSD - a.totalValueLockedUSD;
         case "volume":
           return b.volume24h - a.volume24h;
+        case "24hfee":
+          return b.fee24h - a.fee24h;
+        case "dailyfeestvl":
+          return b.dailyFeesPerTVL - a.dailyFeesPerTVL;
+        case "dailyvolumtvl":
+          return b.dailyVolumePerTVL - a.dailyVolumePerTVL;
         default:
           return 0;
       }
@@ -221,9 +228,12 @@ export const PoolSearchPage: React.FC = () => {
             }
             className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
           >
-            <option value="apr">Highest APR</option>
             <option value="tvl">Highest TVL</option>
             <option value="volume">Highest Volume</option>
+            <option value="24hfee">Highest 24h Fee</option>
+            <option value="dailyfeestvl">Highest Daily Fees/TVL</option>
+            <option value="dailyvolumtvl">Highest Daily Volume/TVL</option>
+            <option value="apr">Highest APR</option>
           </select>
         </div>
 
@@ -369,7 +379,10 @@ export const PoolSearchPage: React.FC = () => {
               <div className="mt-4 flex items-center justify-between">
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
                   <span>24h Fees: {formatLargeNumber(pool.fee24h)}</span>
-                  {/* <span>Liquidity: {formatLargeNumber(parseInt(pool.))}</span> */}
+                  <span>Daily Fees/TVL: {(pool.dailyFeesPerTVL * 100).toFixed(4)}%</span>
+                  <span>Daily Volume/TVL: {pool.dailyVolumePerTVL.toFixed(2)}%</span>
+                </div>
+                <div className="flex items-center space-x-4 text-sm text-gray-600">
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -383,9 +396,6 @@ export const PoolSearchPage: React.FC = () => {
                   >
                     <Calculator className="w-4 h-4" />
                     <span>Estimate earnings</span>
-                  </button>
-                  <button className="p-1.5 text-gray-500 hover:text-gray-700 transition-colors">
-                    <ExternalLink className="w-4 h-4" />
                   </button>
                 </div>
               </div>

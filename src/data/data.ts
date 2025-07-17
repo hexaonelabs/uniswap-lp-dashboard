@@ -19,6 +19,7 @@ import * as chains from "viem/chains";
 // import { getPriceChart } from "../services/coingecko";
 import { getTokenLogoURL } from "../utils/uniswap/helper";
 import { getTokens } from "@lifi/sdk";
+// import { getPriceChart } from "../services/coingecko";
 
 
 export const getPositionsData = async (owner: string, chainId: number = chains.arbitrum.id) => {
@@ -104,7 +105,34 @@ const _formatPositions = async (positions: PositionAPIResponse[], chainId: numbe
       totalLiquidityUSD
     ).toFixed(0);
     
-// console.log("feeGrowthInside0Last (décimal):", feeGrowthInside0Last);
+    const createdAt = new Date(Number(position.transaction.timestamp ) * 1000).toISOString();
+    // fetch using coingeecko the historical price of token0 and token1 at the time of mint
+    const historicalPrice0 = Number(token0.priceUSD) * Number(position.depositedToken0);
+    // isInRange 
+    //   ? await getPriceChart(position.token0.id, chainId)
+    //     .then(data => data?.prices.find(
+    //       (price) => price.timestamp === new Date(createdAt).getTime()
+    //     ))
+    //     .then(price => price ? price.value : 0)
+    //     .catch(() => 0) // handle error and return 0 if not foundx
+    //   : 0;
+    const historicalPrice1 = Number(token1.priceUSD) * Number(position.depositedToken1);
+    // isInRange 
+    //   ? await getPriceChart(position.token0.id, chainId)
+    //     .then(data => data?.prices.find(
+    //       (price) => price.timestamp === new Date(createdAt).getTime()
+    //     ))
+    //     .then(price => price ? price.value : 0)
+    //     .catch(() => 0) // handle error and return 0 if not foundx
+    //   : 0;
+
+    const amountDepositedUSD = isInRange 
+    ? calculateHistoricalDepositValue(
+      position, 
+      Number(historicalPrice0), 
+      Number(historicalPrice1)
+    )
+    : 0;
 
     const formattedPosition: Position = {
       id: position.id,
@@ -123,7 +151,7 @@ const _formatPositions = async (positions: PositionAPIResponse[], chainId: numbe
       // collectedToken1: position.collectedToken1,
       // amountCollectedUSD: position.amountCollectedUSD,
       // amountWithdrawnUSD: position.amountWithdrawnUSD,
-      // amountDepositedUSD: position.amountDepositedUSD,
+      amountDepositedUSD: amountDepositedUSD,
       poolAddress: position.pool.id,
       feeTier: Number(position.pool.feeTier),
       currentPrice: Number(v3Position.pool.token0Price) > 0.01 ? Number(v3Position.pool.token0Price.toFixed(2)) : Number(v3Position.pool.token0Price.toFixed(6)),
@@ -142,7 +170,7 @@ const _formatPositions = async (positions: PositionAPIResponse[], chainId: numbe
       apr: apy, // This can be calculated based on the fees earned and total value
       impermanentLoss, // This can be calculated based on the price changes of the tokens
       lastUpdated: new Date().toISOString(), // This can be set to the current time or the last transaction time
-      createdAt: new Date(Number(position.transaction.timestamp )* 1000).toISOString(),
+      createdAt,
       tokensOwed0: v3Position.amount0.toSignificant(4),
       token0BalancePercentage,
       tokensOwed1: v3Position.amount1.toSignificant(4),
@@ -303,3 +331,16 @@ export const validateAndResolveAddress = async (input: string): Promise<string |
 export const isValidEvmAddress = (address: string): boolean => {
   return isAddress(address)
 }
+
+const calculateHistoricalDepositValue = (
+  position: PositionAPIResponse,
+  currentToken0Price: number,
+  currentToken1Price: number,
+): number => {
+  const depositedToken0 = Number(position.depositedToken0);
+  const depositedToken1 = Number(position.depositedToken1);
+  
+  // Estimation simple: utiliser les prix actuels comme proxy
+  // TODO: Améliorer en récupérant les prix historiques réels
+  return (depositedToken0 * currentToken0Price) + (depositedToken1 * currentToken1Price);
+};

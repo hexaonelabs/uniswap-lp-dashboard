@@ -60,13 +60,36 @@ export const getPriceChart = async (
   queryPeriod: QueryPeriodEnum = QueryPeriodEnum.ONE_MONTH
 ): Promise<PriceChart | null> => {
   const token = getCoingeckoToken(contractAddress, chainId);
-
   if (!token) return null;
+  let marketChartRes;
+  // check if marketChartRes exist in localstorage for less than 12hours
+  const cachedData = localStorage.getItem(`coingecko_market_chart_${token.id}_${queryPeriod}`);
+  if (cachedData) {
+    const parsedData = JSON.parse(cachedData) as {data: PriceChart};
+    const lastTimestamp = parsedData.data.prices[parsedData.data.prices.length - 1].timestamp;
+    const currentTime = Date.now();
+    // if last timestamp is less than 12 hours ago, return cached data
+    if (currentTime - lastTimestamp < 12 * 60 * 60 * 1000) {
+      marketChartRes = parsedData;
+    }
+  }
 
-  const marketChartRes = (await axios.get(
+  // rate limit to 25 calls per minute
+  await coinGeckoLimiter.canMakeCall();
+    
+  marketChartRes = (await axios.get(
     `https://api.coingecko.com/api/v3/coins/${token.id}/market_chart?vs_currency=usd&days=${queryPeriod}`
   )) as any;
-
+  if (!marketChartRes || !marketChartRes.data || !marketChartRes.data.prices) {
+    console.warn(`No price data found for token ${token.id} on chain ${chainId}`);
+    return null;
+  }
+  if (marketChartRes.data.prices.length === 0) {
+    console.warn(`No price data found for token ${token.id} on chain ${chainId} for period ${queryPeriod}`);
+    return null;
+  }
+  // cache the data in localstorage for 12 hours
+  localStorage.setItem(`coingecko_market_chart_${token.id}_${queryPeriod}`, JSON.stringify(marketChartRes));
   const prices = marketChartRes.data.prices.map(
     (d: any) =>
       ({
@@ -82,3 +105,31 @@ export const getPriceChart = async (
     prices,
   };
 };
+
+class RateLimiter {
+  private calls: number[] = [];
+  private maxCalls: number;
+  private windowMs: number;
+
+  constructor(maxCalls: number = 25, windowMinutes: number = 1) {
+    this.maxCalls = maxCalls;
+    this.windowMs = windowMinutes * 60 * 1000;
+  }
+
+  async canMakeCall(): Promise<boolean> {
+    const now = Date.now();
+    this.calls = this.calls.filter(call => now - call < this.windowMs);
+    
+    if (this.calls.length >= this.maxCalls) {
+      const oldestCall = Math.min(...this.calls);
+      const waitTime = this.windowMs - (now - oldestCall);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      return this.canMakeCall();
+    }
+    
+    this.calls.push(now);
+    return true;
+  }
+}
+
+const coinGeckoLimiter = new RateLimiter(25, 1); // 25 calls per minute
