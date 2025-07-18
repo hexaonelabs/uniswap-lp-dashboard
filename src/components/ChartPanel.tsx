@@ -44,40 +44,38 @@ export const ChartPanel = ({
       </h3>
     </div>
 
-    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-      <CorrelationChart
-        state={{
-          token0PriceChart: {
-            prices: correlationData.map((data) => ({
-              timestamp: data.timestamp,
-              value: data.relativePrice, // Utiliser relativePrice au lieu de price0
-            })),
+    <CorrelationChart
+      state={{
+        token0PriceChart: {
+          prices: correlationData.map((data) => ({
+            timestamp: data.timestamp,
+            value: data.relativePrice, // Utiliser relativePrice au lieu de price0
+          })),
+        },
+        token1PriceChart: {
+          prices: correlationData.map((data) => ({
+            timestamp: data.timestamp,
+            value: 1, // Token1 est la référence (toujours 1 dans le ratio)
+          })),
+        },
+        priceAssumptionValue: currentPrice,
+        priceRangeValue: [priceRangeMin, priceRangeMax],
+        isFullRange: isFullRange,
+        token0: token0,
+        token1: token1,
+        pool: {
+          token0: {
+            symbol: token0.symbol,
+            decimals: token0.decimals,
+            priceUSD: currentPrice, // Utiliser le prix actuel pour le token0
           },
-          token1PriceChart: {
-            prices: correlationData.map((data) => ({
-              timestamp: data.timestamp,
-              value: 1, // Token1 est la référence (toujours 1 dans le ratio)
-            })),
+          token1: {
+            symbol: token1.symbol,
+            decimals: token1.decimals,
+            priceUSD: 1, // Token1 est la référence (toujours 1 dans le ratio)
           },
-          priceAssumptionValue: currentPrice,
-          priceRangeValue: [priceRangeMin, priceRangeMax],
-          isFullRange: isFullRange,
-          token0: token0,
-          token1: token1,
-          pool: {
-            token0: {
-              symbol: token0.symbol,
-              decimals: token0.decimals,
-              priceUSD: currentPrice, // Utiliser le prix actuel pour le token0
-            },
-            token1: {
-              symbol: token1.symbol,
-              decimals: token1.decimals,
-              priceUSD: 1, // Token1 est la référence (toujours 1 dans le ratio)
-            },
-          },
-        }}
-      />
-    </div>
+        },
+      }}
+    />
   </div>
 );

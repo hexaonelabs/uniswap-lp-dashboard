@@ -4,43 +4,42 @@ import {
   findMax,
   findMin,
   processPriceChartData,
-
 } from "../utils/math";
 import D3CorrelationChart from "./D3CorrelationChart";
 
-
 // let d3Chart: D3CorrelationChart | null = null;
 export interface CorrelationChartProps {
-    token0PriceChart: {
-      prices: { timestamp: number; value: number }[];
-    } | null;
-    token1PriceChart: {
-      prices: { timestamp: number; value: number }[];
-    } | null;
-    priceAssumptionValue: number;
-    priceRangeValue: number[];
-    isFullRange: boolean;
-    pool?: {
-      token0: {
-        priceUSD: number;
-        symbol: string;
-        decimals: number;
-      };
-      token1: {
-        priceUSD: number;
-        symbol: string;
-        decimals: number;
-      };
+  token0PriceChart: {
+    prices: { timestamp: number; value: number }[];
+  } | null;
+  token1PriceChart: {
+    prices: { timestamp: number; value: number }[];
+  } | null;
+  priceAssumptionValue: number;
+  priceRangeValue: number[];
+  isFullRange: boolean;
+  pool?: {
+    token0: {
+      priceUSD: number;
+      symbol: string;
+      decimals: number;
     };
-    token0?: { symbol: string; decimals: number } | null;
-    token1?: { symbol: string; decimals: number } | null;
-  }
-const CorrelationChart = ({ state }: {state: CorrelationChartProps}) => {
-
-  const [data, setData] = useState<{
-    x: number;
-    y: number;
-  }[]>([]);
+    token1: {
+      priceUSD: number;
+      symbol: string;
+      decimals: number;
+    };
+  };
+  token0?: { symbol: string; decimals: number } | null;
+  token1?: { symbol: string; decimals: number } | null;
+}
+const CorrelationChart = ({ state }: { state: CorrelationChartProps }) => {
+  const [data, setData] = useState<
+    {
+      x: number;
+      y: number;
+    }[]
+  >([]);
   const refElement = useRef<HTMLDivElement>(null);
   const d3ChartRef = useRef<D3CorrelationChart | null>(null);
 
@@ -75,7 +74,9 @@ const CorrelationChart = ({ state }: {state: CorrelationChartProps}) => {
   useEffect(() => {
     if (!d3ChartRef.current) return;
 
-    d3ChartRef.current.updateMostActivePriceAssumption(state.priceAssumptionValue);
+    d3ChartRef.current.updateMostActivePriceAssumption(
+      state.priceAssumptionValue
+    );
   }, [state.priceAssumptionValue]);
 
   useEffect(() => {
@@ -95,41 +96,49 @@ const CorrelationChart = ({ state }: {state: CorrelationChartProps}) => {
       }
     };
   }, []);
-  
+
   if (state.token0PriceChart === null || state.token1PriceChart === null) {
     return <>...</>;
   }
 
   return (
-<>
-  <div>
-    Price: {Number(state.pool?.token0.priceUSD).toFixed(2)}{" "}
-    {state.token0?.symbol} / {state.token1?.symbol}
-    <div ref={refElement} />
-</div>
+    <>
 
-        <div>
-          <div>
-            <div>MIN</div>{" "}
-            <span>{findMin(data.map((d) => d.y)).toFixed(4)}</span>
-          </div>
-          <div>
-            <div>MAX</div>{" "}
-            <span>{findMax(data.map((d) => d.y)).toFixed(4)}</span>
-          </div>
-          <div>
-            <div>AVG</div>{" "}
-            <span>{averageArray(data.map((d) => d.y)).toFixed(4)}</span>
-          </div>
-          <div className="mobile">
-            <div>$$$</div>{" "}
-            <span>
-              {Number(state.pool?.token0.priceUSD).toFixed(2)}{" "}
-              {state.token0?.symbol} / {state.token1?.symbol}
-            </span>
+      {/* Statistiques en grid sobre */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+          <div className="text-gray-500 text-xs font-normal mb-1">MIN</div>
+          <div className="text-gray-900 font-medium">
+            {findMin(data.map((d) => d.y)).toFixed(4)}
           </div>
         </div>
-</>
+
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+          <div className="text-gray-500 text-xs font-normal mb-1">CURRENT</div>
+          <div className="text-gray-900 font-medium">
+            {Number(state.pool?.token0.priceUSD).toFixed(4).toLocaleString()}
+          </div>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+          <div className="text-gray-500 text-xs font-normal mb-1">AVG</div>
+          <div className="text-gray-900 font-medium">
+            {averageArray(data.map((d) => d.y)).toFixed(4)}
+          </div>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+          <div className="text-gray-500 text-xs font-normal mb-1">MAX</div>
+          <div className="text-gray-900 font-medium">
+            {findMax(data.map((d) => d.y)).toFixed(4)}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 rounded-xl pt-4 pb-4 mt-4 mb-4 border border-gray-200">
+        <div ref={refElement} />
+      </div>
+    </>
   );
 };
 
