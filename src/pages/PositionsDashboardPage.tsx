@@ -352,18 +352,20 @@ export const PositionsDashboardPage: React.FC = () => {
         </div>
       )}
 
-      {!showAnalytics && filteredPositions.length > 0 && (
+      {!showAnalytics  && (
         <>
           <PositionsFilters
             filters={filters}
             onFiltersChange={setFilters}
             chains={NETWORKS}
           />
+          {filteredPositions.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             {filteredPositions.map((position) => (
               <PositionCard key={position.id} position={position} />
             ))}
           </div>
+          )}
         </>
       )}
 
