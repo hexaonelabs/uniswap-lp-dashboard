@@ -210,6 +210,16 @@ export interface PortfolioPosition {
   isFullRange: boolean;
   addedAt: number;
 }
-
+export interface PoolTicksAPIResponse {
+  data: {
+    pool: {
+      ticks: {
+        tickIdx: string;
+        liquidityNet: string;
+        liquidityGross: string;
+      }[];
+    };
+  };
+}
 
 export const PORTFOLIO_STORAGE_KEY = "lp_portfolio_positions";

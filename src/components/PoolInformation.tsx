@@ -40,7 +40,6 @@ export const PoolInformation = ({
         impermanentLossRisk: "Medium",
         dataPoints: 0,
       };
-    console.log("tokensDayDatas", tokensDayDatas);
     return calculateTokenPriceCorrelation(tokensDayDatas, timeframe);
   }, [tokensDayDatas, timeframe]);
 

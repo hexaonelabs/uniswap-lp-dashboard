@@ -1,6 +1,6 @@
 import bn from "bignumber.js";
 import { fetcher, Network, NETWORKS } from "../services/fetcher";
-import { getPools } from "../services/querys";
+import { getPools, getPoolTicks } from "../services/querys";
 import { GetPoolsAPIResponse, PoolAPIResponse, PoolColumnDataType, PoolDayData, PoolDayDatumAPIResponse, Risk, RiskChecklist, Token } from "../types";
 import BigNumber from 'bignumber.js';
 import { getTokens } from "@lifi/sdk";
@@ -102,6 +102,39 @@ export const getPoolsData = async (
   } catch (e) {
     console.error("Error fetching pools data:", e);
     return { pools: [], tokens: [] };
+  }
+};
+
+export const getPoolTicksData = async (
+  poolId: string,
+  chainId: number
+): Promise<{ tickIdx: string; liquidityNet: string }[]> => {
+  const chain = NETWORKS.find((network) => network.id === chainId);
+  if (!chain) {
+    throw new Error(`Network with chainId ${chainId} not found`);
+  }
+  try {
+    const res = await fetcher<{
+      data: {
+        pool: {
+          ticks: { tickIdx: string; liquidityNet: string; liquidityGross: string }[];
+        };
+      };
+    }>(getPoolTicks(poolId) , chainId);
+    
+    console.log(`Loading ticks for poolId: ${poolId}, chainId: ${chainId}`, res);
+
+    if (!res?.data?.pool?.ticks) {
+      return [];
+    }
+
+    return res.data.pool.ticks.map(tick => ({
+      tickIdx: tick.tickIdx,
+      liquidityNet: tick.liquidityNet
+    }));
+  } catch (error) {
+    console.error("Error fetching pool ticks:", error);
+    return [];
   }
 };
 

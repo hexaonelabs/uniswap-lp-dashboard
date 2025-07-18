@@ -83,6 +83,7 @@ export const NETWORKS: Network[] = [
     subgraphEndpoint: [
       import.meta.env.VITE_ARBITRUM_SUBGRAPH_URL,
       import.meta.env.VITE_ARBITRUM_SUBGRAPH_URL_POOLS,
+      import.meta.env.VITE_ARBITRUM_SUBGRAPH_URL_TICKS,
     ],
     nonfungiblePositionManagerAddress: '0xC36442b4a4522E871399CD717aBDD847Ab11FE88',
     factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
@@ -98,6 +99,7 @@ export const NETWORKS: Network[] = [
     subgraphEndpoint: [
       import.meta.env.VITE_BASE_SUBGRAPH_URL,
       import.meta.env.VITE_BASE_SUBGRAPH_URL_POOLS,
+      import.meta.env.VITE_BASE_SUBGRAPH_URL_TICKS,
     ],
     nonfungiblePositionManagerAddress: '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
     factory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
@@ -121,6 +123,10 @@ const _queryUniswap = async <T>(query: string, chainId: number): Promise<T> => {
   if (!salt) {
     salt = 'pools'; // default salt for pools query
   }
+  if (query.includes('ticks')) {
+    salt = 'ticks-' + query.match(/id:\s*"([^"]+)"/)?.[1]; // set salt for ticks query
+    console.log(`Using salt for ticks query: ${salt}`);
+  }
   const key = `uniswap-query-${chainId}-${salt}`;
   // Check if the query is cached less than 15minutes ago
   const cacheTime = 15 * 60 * 1000; // 15 minutes
@@ -139,7 +145,18 @@ const _queryUniswap = async <T>(query: string, chainId: number): Promise<T> => {
   }
 
   const network = getNetworkConfigByChainId(chainId);
-  const endpoint = salt === 'pools' ? network.subgraphEndpoint[1] : network.subgraphEndpoint[0];
+  let endpoint;
+  switch (true) {
+    case salt === 'pools':
+      endpoint = network.subgraphEndpoint[1];
+      break;
+    case salt.includes('ticks'):
+      endpoint = network.subgraphEndpoint[2];
+      break;
+    default:
+      endpoint = network.subgraphEndpoint[0];
+      break;
+  }
   const req = await fetch(endpoint, {
     method: 'POST',
     headers: {

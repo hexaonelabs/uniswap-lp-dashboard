@@ -23,8 +23,8 @@ export const PriceRangeSelector = ({
   currentPool: PoolColumnDataType;
 }) => {
   // Calculer les limites basées sur le prix actuel
-  const minLimit = currentPrice * 0.1;
-  const maxLimit = currentPrice * 3;
+  const minLimit = currentPrice * 0.5;
+  const maxLimit = currentPrice * 1.4;
 
   const handleMinChange = (value: number) => {
     if (value < priceRangeMax) {
@@ -185,15 +185,16 @@ export const PriceRangeSelector = ({
             ))}
           </div>
 
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600 font-medium">Range Size</span>
+            <span className="text-gray-800 font-semibold">
+              {(((priceRangeMax - priceRangeMin) / currentPrice) * 100).toFixed(
+                1
+              )}
+              %
+            </span>
+          </div>
           {/* Concentration de liquidité */}
-          {/* <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-center">
-            <div className="text-purple-700 text-sm font-medium">
-              Concentration:{" "}
-              <span className="font-bold">
-                {liquidityConcentration.toFixed(2)}x
-              </span>
-            </div>
-          </div> */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-700">

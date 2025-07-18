@@ -121,3 +121,15 @@ export const getPools = (first: number, totalValueLockedUSD_gte: number, volumeU
       }
     }
 `;
+
+export const getPoolTicks = (poolId: string, first = 1000) => `
+  {
+    pool(id: "${poolId.toLowerCase()}") {
+      ticks(first: ${first}, orderBy: tickIdx, orderDirection: asc) {
+        tickIdx
+        liquidityNet
+        liquidityGross
+      }
+    }
+  }
+`;

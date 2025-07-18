@@ -24,6 +24,7 @@ import { NETWORKS } from "../services/fetcher";
 import DexScreenerIcon from "../assets/icons/dexscreener.svg";
 import ScanExplorerIcon from "../assets/icons/scanexplorer.svg";
 import { LiquidityPositionChart } from "../components/LiquidityPositionChart";
+import { usePoolTicks } from "../hooks/usePoolTicks";
 
 export interface FeeCalculationParams {
   volume: number;
@@ -122,6 +123,7 @@ export const EstimateEarningsPage = () => {
   const [liquidityAmount, setLiquidityAmount] = useState(
     Number(searchParams.get("liquidityAmount") || 1_000)
   );
+
   const [timeframe, setTimeframe] = useState(14);
 
   const [isFullRange, setIsFullRange] = useState(false);
@@ -327,6 +329,10 @@ export const EstimateEarningsPage = () => {
     return data;
   }, [currentPool, token0PriceData, token1PriceData, timeframe]);
 
+  const { poolTicks, loading: ticksLoading } = usePoolTicks(
+    currentPool?.poolId || null,
+    chainId ? Number(chainId) : null
+  );
   // const avgAPY = useMemo(() => {
   //   const sum = correlationData.reduce((sum, data) => sum + data.apy, 0);
   //   return sum / correlationData.length || 0;
@@ -766,18 +772,32 @@ export const EstimateEarningsPage = () => {
                 Liquidity Distribution
               </h3>
             </div>
-            <LiquidityPositionChart
-              state={{
-                isFullRange,
-                isPairToggled: false,
-                pool: currentPool,
-                poolTicks: [],
-                priceAssumptionValue: currentPrice,
-                priceRangeValue: [priceRangeMin, priceRangeMax],
-                token0: currentPool.token0,
-                token1: currentPool.token1,
-              }}
-            />
+            
+            {!ticksLoading && poolTicks.length > 0 && (
+              <LiquidityPositionChart
+                state={{
+                  isFullRange,
+                  isPairToggled: false,
+                  pool: currentPool,
+                  poolTicks,
+                  priceAssumptionValue: currentPrice,
+                  priceRangeValue: [priceRangeMin, priceRangeMax],
+                  token0: currentPool.token0,
+                  token1: currentPool.token1,
+                }}
+              />
+
+            )}
+
+            {ticksLoading && (
+              <div className="flex items-center justify-center h-64">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
