@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Search,
   Sparkles,
+  BarChart3,
 } from "lucide-react";
 import { getPriceChart, QueryPeriodEnum } from "../services/coingecko";
 import { SimulationControlsPanel } from "../components/SimulationControlsSimulationControlsPanel";
@@ -22,6 +23,7 @@ import { VolumeChart } from "../components/positions/VolumeChart";
 import { NETWORKS } from "../services/fetcher";
 import DexScreenerIcon from "../assets/icons/dexscreener.svg";
 import ScanExplorerIcon from "../assets/icons/scanexplorer.svg";
+import { LiquidityPositionChart } from "../components/LiquidityPositionChart";
 
 export interface FeeCalculationParams {
   volume: number;
@@ -268,7 +270,11 @@ export const EstimateEarningsPage = () => {
   }, [correlationData]);
 
   const tokensDayDatas = useMemo(() => {
-    if (!currentPool || token0PriceData.length === 0 || token1PriceData.length === 0) {
+    if (
+      !currentPool ||
+      token0PriceData.length === 0 ||
+      token1PriceData.length === 0
+    ) {
       return [];
     }
 
@@ -291,15 +297,24 @@ export const EstimateEarningsPage = () => {
       // Utiliser les indices en partant de la fin pour avoir les données les plus récentes
       const token0Index = Math.max(0, token0PriceData.length - maxLength + i);
       const token1Index = Math.max(0, token1PriceData.length - maxLength + i);
-      const poolIndex = Math.max(0, currentPool.poolDayDatas.length - maxLength + i);
+      const poolIndex = Math.max(
+        0,
+        currentPool.poolDayDatas.length - maxLength + i
+      );
 
-      const token0Price = token0PriceData[token0Index]?.value || Number(currentPool.token0.priceUSD);
-      const token1Price = token1PriceData[token1Index]?.value || Number(currentPool.token1.priceUSD);
+      const token0Price =
+        token0PriceData[token0Index]?.value ||
+        Number(currentPool.token0.priceUSD);
+      const token1Price =
+        token1PriceData[token1Index]?.value ||
+        Number(currentPool.token1.priceUSD);
       const poolDayData = currentPool.poolDayDatas[poolIndex];
       const volumeUSD = poolDayData?.volumeUSD || currentPool.volume24h;
 
       // Calculer la date correspondante
-      const date = token0PriceData[token0Index]?.timestamp || Date.now() - (maxLength - i) * 24 * 60 * 60 * 1000;
+      const date =
+        token0PriceData[token0Index]?.timestamp ||
+        Date.now() - (maxLength - i) * 24 * 60 * 60 * 1000;
 
       data.push({
         token0Price: token0Price.toString(),
@@ -402,7 +417,7 @@ export const EstimateEarningsPage = () => {
 
     // Calculer les métriques actuelles
     const dailyEarnings = totalEarnings / 30;
-    const estimatedAPR = ((totalEarnings / liquidityAmount) * 12 * 100);
+    const estimatedAPR = (totalEarnings / liquidityAmount) * 12 * 100;
 
     // Créer l'objet position
     const newPosition = {
@@ -442,12 +457,14 @@ export const EstimateEarningsPage = () => {
 
     // Vérifier si la position existe déjà (même pool, même chaîne, même range)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existingIndex = existingPositions.findIndex((pos: any) => 
-      pos.poolId === newPosition.poolId && 
-      pos.chainId === newPosition.chainId &&
-      pos.isFullRange === newPosition.isFullRange &&
-      pos.priceRangeMin === newPosition.priceRangeMin &&
-      pos.priceRangeMax === newPosition.priceRangeMax
+    const existingIndex = existingPositions.findIndex(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (pos: any) =>
+        pos.poolId === newPosition.poolId &&
+        pos.chainId === newPosition.chainId &&
+        pos.isFullRange === newPosition.isFullRange &&
+        pos.priceRangeMin === newPosition.priceRangeMin &&
+        pos.priceRangeMax === newPosition.priceRangeMax
     );
 
     if (existingIndex !== -1) {
@@ -459,7 +476,10 @@ export const EstimateEarningsPage = () => {
     }
 
     // Sauvegarder dans localStorage
-    localStorage.setItem("lp_portfolio_positions", JSON.stringify(existingPositions));
+    localStorage.setItem(
+      "lp_portfolio_positions",
+      JSON.stringify(existingPositions)
+    );
 
     // Naviguer vers le portfolio builder
     navigate("/builder");
@@ -492,7 +512,7 @@ export const EstimateEarningsPage = () => {
   //   );
   // }
   if (!currentPool || !poolAddress || !chainId) {
-    return (<DefaultPreviewPage />)
+    return <DefaultPreviewPage />;
   }
 
   return (
@@ -738,201 +758,232 @@ export const EstimateEarningsPage = () => {
 
           {/* Volume Chart */}
           <VolumeChart poolDayDatas={currentPool.poolDayDatas} />
+
+          <div className="bg-white rounded-xl shadow-lg mt-8 p-6 border border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <BarChart3 className="w-6 h-6 text-purple-500" />
+                Liquidity Distribution
+              </h3>
+            </div>
+            <LiquidityPositionChart
+              state={{
+                isFullRange,
+                isPairToggled: false,
+                pool: currentPool,
+                poolTicks: [],
+                priceAssumptionValue: currentPrice,
+                priceRangeValue: [priceRangeMin, priceRangeMax],
+                token0: currentPool.token0,
+                token1: currentPool.token1,
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-
 const DefaultPreviewPage = () => {
-    const navigate = useNavigate();
-      return (
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 rounded-2xl shadow-xl">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
-                  <Calculator className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    Estimate Earnings
-                  </h1>
-                  <p className="text-gray-200 mt-1">
-                    Calculate potential returns for liquidity providing positions
-                  </p>
-                </div>
+  const navigate = useNavigate();
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 rounded-2xl shadow-xl">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
+                <Calculator className="w-8 h-8 text-white" />
               </div>
-            </div>
-
-            {/* Empty State Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <DollarSign className="w-8 h-8 text-gray-400" />
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-500">
-                      $--
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      24h Estimated Earnings
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <MetricsCard
-                icon={TrendingUp}
-                title="Average APY"
-                value="--"
-                color="text-gray-400"
-                subtitle="Select a pool to see estimates"
-              />
-              
-              <MetricsCard
-                icon={Settings}
-                title="Liquidity Amount"
-                value="--"
-                color="text-gray-400"
-                subtitle="Configure your position size"
-              />
-              
-              <MetricsCard
-                icon={Clock}
-                title="Timeframe"
-                value="--"
-                color="text-gray-400"
-                subtitle="Historical analysis period"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Empty State Content */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="p-12 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="max-w-2xl mx-auto"
-            >
-              {/* Icon */}
-              <div className="mb-8">
-                <div className="relative inline-block">
-                  <div className="p-6 bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl">
-                    <Calculator className="w-16 h-16 text-purple-600" />
-                  </div>
-                  <motion.div
-                    animate={{ 
-                      scale: [1, 1.1, 1],
-                      rotate: [0, 5, -5, 0]
-                    }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                    className="absolute -top-2 -right-2"
-                  >
-                    <Sparkles className="w-8 h-8 text-yellow-500" />
-                  </motion.div>
-                </div>
-              </div>
-
-              {/* Title */}
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                Ready to Calculate Your LP Returns?
-              </h2>
-              
-              {/* Description */}
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                Get detailed earnings estimates for any Uniswap V3 liquidity position. 
-                Analyze historical performance, optimize your price ranges, and make informed investment decisions.
-              </p>
-
-              {/* Features */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                <div className="text-left p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <TrendingUp className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-800">APY Calculation</h3>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Calculate realistic returns based on historical volume and fee data
-                  </p>
-                </div>
-
-                <div className="text-left p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-pink-100 rounded-lg">
-                      <Settings className="w-5 h-5 text-pink-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-800">Range Optimization</h3>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Test different price ranges and see their impact on your earnings
-                  </p>
-                </div>
-
-                <div className="text-left p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Clock className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-800">Historical Analysis</h3>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Analyze performance over different time periods and market conditions
-                  </p>
-                </div>
-
-                <div className="text-left p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-emerald-100 rounded-lg">
-                      <DollarSign className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-800">Fee Projections</h3>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Get detailed breakdowns of fee earnings and portfolio impact
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => navigate('/explore')}
-                  className="flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium text-lg"
-                >
-                  <Search className="w-5 h-5" />
-                  <span>Explore Pools</span>
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-
-                <button
-                  onClick={() => navigate('/builder')}
-                  className="flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-purple-200 text-purple-700 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 font-medium text-lg"
-                >
-                  <span>View Portfolio Builder</span>
-                </button>
-              </div>
-
-              {/* Bottom hint */}
-              <div className="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <p className="text-sm text-blue-700">
-                  💡 <strong>Pro tip:</strong> Start by exploring high-volume pools for more stable earnings estimates
+              <div>
+                <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  Estimate Earnings
+                </h1>
+                <p className="text-gray-200 mt-1">
+                  Calculate potential returns for liquidity providing positions
                 </p>
               </div>
-            </motion.div>
+            </div>
+          </div>
+
+          {/* Empty State Metrics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <DollarSign className="w-8 h-8 text-gray-400" />
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-500">$--</div>
+                  <div className="text-sm text-gray-400">
+                    24h Estimated Earnings
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <MetricsCard
+              icon={TrendingUp}
+              title="Average APY"
+              value="--"
+              color="text-gray-400"
+              subtitle="Select a pool to see estimates"
+            />
+
+            <MetricsCard
+              icon={Settings}
+              title="Liquidity Amount"
+              value="--"
+              color="text-gray-400"
+              subtitle="Configure your position size"
+            />
+
+            <MetricsCard
+              icon={Clock}
+              title="Timeframe"
+              value="--"
+              color="text-gray-400"
+              subtitle="Historical analysis period"
+            />
           </div>
         </div>
       </div>
-    );
-}
+
+      {/* Empty State Content */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="p-12 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-2xl mx-auto"
+          >
+            {/* Icon */}
+            <div className="mb-8">
+              <div className="relative inline-block">
+                <div className="p-6 bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl">
+                  <Calculator className="w-16 h-16 text-purple-600" />
+                </div>
+                <motion.div
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 5, -5, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="absolute -top-2 -right-2"
+                >
+                  <Sparkles className="w-8 h-8 text-yellow-500" />
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+              Ready to Calculate Your LP Returns?
+            </h2>
+
+            {/* Description */}
+            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              Get detailed earnings estimates for any Uniswap V3 liquidity
+              position. Analyze historical performance, optimize your price
+              ranges, and make informed investment decisions.
+            </p>
+
+            {/* Features */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+              <div className="text-left p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800">
+                    APY Calculation
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Calculate realistic returns based on historical volume and fee
+                  data
+                </p>
+              </div>
+
+              <div className="text-left p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-pink-100 rounded-lg">
+                    <Settings className="w-5 h-5 text-pink-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800">
+                    Range Optimization
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Test different price ranges and see their impact on your
+                  earnings
+                </p>
+              </div>
+
+              <div className="text-left p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Clock className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800">
+                    Historical Analysis
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Analyze performance over different time periods and market
+                  conditions
+                </p>
+              </div>
+
+              <div className="text-left p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800">
+                    Fee Projections
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Get detailed breakdowns of fee earnings and portfolio impact
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => navigate("/explore")}
+                className="flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium text-lg"
+              >
+                <Search className="w-5 h-5" />
+                <span>Explore Pools</span>
+                <ArrowRight className="w-5 h-5" />
+              </button>
+
+              <button
+                onClick={() => navigate("/builder")}
+                className="flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-purple-200 text-purple-700 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 font-medium text-lg"
+              >
+                <span>View Portfolio Builder</span>
+              </button>
+            </div>
+
+            {/* Bottom hint */}
+            <div className="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <p className="text-sm text-blue-700">
+                💡 <strong>Pro tip:</strong> Start by exploring high-volume
+                pools for more stable earnings estimates
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+};

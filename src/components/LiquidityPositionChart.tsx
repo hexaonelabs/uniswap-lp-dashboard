@@ -262,7 +262,6 @@ export const LiquidityPositionChart = ({state}: {state: LiquidityPositionChartPr
 
   return (
     <>
-      <h3>Liquidity Position</h3>
       <div ref={refElement} />
     </>
   );
