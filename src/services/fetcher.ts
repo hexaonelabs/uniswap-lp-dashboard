@@ -86,8 +86,8 @@ export const NETWORKS: Network[] = [
     ],
     nonfungiblePositionManagerAddress: '0xC36442b4a4522E871399CD717aBDD847Ab11FE88',
     factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-    totalValueLockedUSD_gte: 200_000,
-    volumeUSD_gte: 100_000,
+    totalValueLockedUSD_gte: 100_000,
+    volumeUSD_gte: 50_000,
   },
     {
     ...base,
@@ -101,8 +101,8 @@ export const NETWORKS: Network[] = [
     ],
     nonfungiblePositionManagerAddress: '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
     factory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
-    totalValueLockedUSD_gte: 200_000,
-    volumeUSD_gte: 100_000,
+    totalValueLockedUSD_gte: 100_000,
+    volumeUSD_gte: 50_000,
   },
 ];
 
