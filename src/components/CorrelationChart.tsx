@@ -19,18 +19,6 @@ export interface CorrelationChartProps {
   priceAssumptionValue: number;
   priceRangeValue: number[];
   isFullRange: boolean;
-  pool?: {
-    token0: {
-      priceUSD: number;
-      symbol: string;
-      decimals: number;
-    };
-    token1: {
-      priceUSD: number;
-      symbol: string;
-      decimals: number;
-    };
-  };
   token0?: { symbol: string; decimals: number } | null;
   token1?: { symbol: string; decimals: number } | null;
 }
@@ -116,7 +104,7 @@ const CorrelationChart = ({ state }: { state: CorrelationChartProps }) => {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
           <div className="text-gray-500 text-xs font-normal mb-1">CURRENT</div>
           <div className="text-gray-900 font-medium">
-            {Number(state.pool?.token0.priceUSD).toFixed(4).toLocaleString()}
+            {Number(state.priceAssumptionValue).toFixed(4).toLocaleString()}
           </div>
         </div>
 
