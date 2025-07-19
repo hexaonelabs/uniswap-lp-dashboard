@@ -27,8 +27,6 @@ import { LiquidityPositionChart } from "../components/LiquidityPositionChart";
 import { usePoolTicks } from "../hooks/usePoolTicks";
 import { CorrelationDataInterface } from "../components/CorrelationChart";
 
-
-
 export interface FeeCalculationParams {
   volume: number;
   feeTier: number; // en unités (ex: 3000 pour 0.3%)
@@ -161,33 +159,46 @@ export const EstimateEarningsPage = () => {
     if (!currentPool || !token0PriceData || !token1PriceData) return [];
     // filter data using timeframe
     const startDate = new Date();
-    const dataToUse = token0PriceData
-    .filter((d) => {
+    const filtredToken0PriceData = token0PriceData.filter((d) => {
       const date = new Date(d.timestamp);
-      return date.getTime() >= startDate.getTime() - timeframe * 24 * 60 * 60 * 1000;
+      return (
+        date.getTime() >= startDate.getTime() - timeframe * 24 * 60 * 60 * 1000
+      );
     });
-    const data: CorrelationDataInterface = dataToUse.map((token0Data, index) => {
-      const token1Data = token1PriceData[index];
-      return {
-        timestamp: token0Data.timestamp,
-        price: token0Data.value / (token1Data?.value || 1),
-        tokenSymbol0: currentPool.token0.symbol,
-        tokenSymbol1: currentPool.token1.symbol,
-      };
+    const filtredToken1PriceData = token1PriceData.filter((d) => {
+      const date = new Date(d.timestamp);
+      return (
+        date.getTime() >= startDate.getTime() - timeframe * 24 * 60 * 60 * 1000
+      );
     });
+    // Assuming both token0 and token1 have the same length after filtering
+    const data: CorrelationDataInterface = filtredToken0PriceData.map(
+      (token0Data, index) => {
+        const token1Data = filtredToken1PriceData[index];
+        return {
+          timestamp: token0Data.timestamp,
+          price: token0Data.value / (token1Data?.value || 1),
+          tokenSymbol0: currentPool.token0.symbol,
+          tokenSymbol1: currentPool.token1.symbol,
+        };
+      }
+    );
     return data;
-  }, [ currentPool, token0PriceData, token1PriceData, timeframe ]);
+  }, [currentPool, token0PriceData, token1PriceData, timeframe]);
 
   const totalEarnings = useMemo(() => {
     if (!currentPool) return 0;
     const startDate = new Date();
     const params: FeeCalculationParams = {
       volume: currentPool.poolDayDatas
-      .filter((d) => {
-        const date = new Date(d.date * 1000);
-        return date.getTime() >= startDate.getTime() - timeframe * 24 * 60 * 60 * 1000;
-      })
-      .reduce((acc, dayData) => acc + Number(dayData.volumeUSD), 0),
+        .filter((d) => {
+          const date = new Date(d.date * 1000);
+          return (
+            date.getTime() >=
+            startDate.getTime() - timeframe * 24 * 60 * 60 * 1000
+          );
+        })
+        .reduce((acc, dayData) => acc + Number(dayData.volumeUSD), 0),
       feeTier: Number(currentPool.feeTier),
       liquidityAmount,
       totalValueLocked: currentPool.totalValueLockedUSD,
@@ -691,7 +702,7 @@ export const EstimateEarningsPage = () => {
                 Liquidity Distribution
               </h3>
             </div>
-            
+
             {!ticksLoading && poolTicks.length > 0 && (
               <LiquidityPositionChart
                 state={{
@@ -705,7 +716,6 @@ export const EstimateEarningsPage = () => {
                   token1: currentPool.token1,
                 }}
               />
-
             )}
 
             {ticksLoading && (
