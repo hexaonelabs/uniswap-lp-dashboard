@@ -25,6 +25,9 @@ import DexScreenerIcon from "../assets/icons/dexscreener.svg";
 import ScanExplorerIcon from "../assets/icons/scanexplorer.svg";
 import { LiquidityPositionChart } from "../components/LiquidityPositionChart";
 import { usePoolTicks } from "../hooks/usePoolTicks";
+import { CorrelationDataInterface } from "../components/CorrelationChart";
+
+
 
 export interface FeeCalculationParams {
   volume: number;
@@ -45,7 +48,7 @@ export interface FeeEstimateResult {
   isInRange: boolean;
 }
 
-export const calculateEstimatedFees = (
+const calculateEstimatedFees = (
   params: FeeCalculationParams
 ): FeeEstimateResult => {
   const {
@@ -94,24 +97,15 @@ export const calculateEstimatedFees = (
   };
 };
 
-export const calculateFeesForPeriod = (
-  volumeData: number[],
-  params: Omit<FeeCalculationParams, "volume">
-): FeeEstimateResult[] => {
-  return volumeData.map((volume) =>
-    calculateEstimatedFees({ ...params, volume })
-  );
-};
+// const calculateAPY = (
+//   estimatedFees: number,
+//   liquidityAmount: number,
+//   timeframeDays: number
+// ): number => {
+//   if (liquidityAmount === 0 || timeframeDays === 0) return 0;
 
-export const calculateAPY = (
-  estimatedFees: number,
-  liquidityAmount: number,
-  timeframeDays: number
-): number => {
-  if (liquidityAmount === 0 || timeframeDays === 0) return 0;
-
-  return (estimatedFees / liquidityAmount) * (365 / timeframeDays) * 100;
-};
+//   return (estimatedFees / liquidityAmount) * (365 / timeframeDays) * 100;
+// };
 
 export const EstimateEarningsPage = () => {
   const navigate = useNavigate();
@@ -164,112 +158,55 @@ export const EstimateEarningsPage = () => {
   }, [isFullRange, priceRangeMin, priceRangeMax, currentPrice]);
 
   const correlationData = useMemo(() => {
-    if (!currentPool || token0PriceData.length === 0) return [];
-
-    const data = [];
+    if (!currentPool || !token0PriceData || !token1PriceData) return [];
+    // filter data using timeframe
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - timeframe);
-
-    // Calculer le prix relatif ACTUEL pour la référence
-    const currentRelativePrice =
-      token0PriceData.length > 0 && token1PriceData.length > 0
-        ? token0PriceData[token0PriceData.length - 1].value /
-          token1PriceData[token1PriceData.length - 1].value
-        : Number(currentPool.token0.priceUSD) /
-          Number(currentPool.token1.priceUSD);
-
-    // Mettre à jour currentPrice avec la valeur cohérente
-    if (currentPrice !== currentRelativePrice) {
-      setCurrentPrice(currentRelativePrice);
-    }
-
-    for (let i = 0; i < timeframe; i++) {
-      // Utiliser les indices en partant de la fin (données les plus récentes)
-      const token0Index = Math.max(0, token0PriceData.length - timeframe + i);
-      const token1Index = Math.max(0, token1PriceData.length - timeframe + i);
-
-      const token0Price =
-        token0PriceData[token0Index]?.value ||
-        token0PriceData[token0PriceData.length - 1]?.value ||
-        Number(currentPool.token0.priceUSD);
-      const token1Price =
-        token1PriceData[token1Index]?.value ||
-        token1PriceData[token1PriceData.length - 1]?.value ||
-        Number(currentPool.token1.priceUSD);
-
-      // Calculer le prix relatif (token0/token1)
-      const relativePrice =
-        token1Price > 0 ? token0Price / token1Price : currentRelativePrice;
-
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      const timestamp = date.getTime();
-
-      const dayIndex = Math.min(i, currentPool.poolDayDatas.length - 1);
-      const poolDayData =
-        currentPool.poolDayDatas[dayIndex] || currentPool.poolDayDatas[0];
-      const dailyVolume =
-        Number(poolDayData.volumeUSD) || currentPool.volume24h;
-
-      // Utiliser la nouvelle fonction de calcul des frais
-      const feeCalculation = calculateEstimatedFees({
-        volume: dailyVolume,
-        feeTier: Number(currentPool.feeTier),
-        liquidityAmount,
-        totalValueLocked: currentPool.totalValueLockedUSD,
-        currentPrice: relativePrice,
-        priceRangeMin,
-        priceRangeMax,
-        isFullRange,
-      });
-
-      const impermanentLoss = 0;
-      const apy = calculateAPY(
-        feeCalculation.estimatedFees,
-        liquidityAmount,
-        1
-      );
-
-      data.push({
-        timestamp,
-        date: date.toLocaleDateString(),
-        fees: feeCalculation.estimatedFees,
-        impermanentLoss: Math.min(0, -Math.abs(impermanentLoss)),
-        netEarnings: feeCalculation.estimatedFees,
-        apy: apy * timeframe, // Ajuster pour la période complète
-        price0: token0Price,
-        price1: token1Price,
-        relativePrice,
-        volume: dailyVolume,
-        tvl: currentPool.totalValueLockedUSD,
-        liquidityConcentration: feeCalculation.liquidityConcentration,
-        isInRange: feeCalculation.isInRange,
-      });
-    }
+    const dataToUse = token0PriceData
+    .filter((d) => {
+      const date = new Date(d.timestamp);
+      return date.getTime() >= startDate.getTime() - timeframe * 24 * 60 * 60 * 1000;
+    });
+    const data: CorrelationDataInterface = dataToUse.map((token0Data, index) => {
+      const token1Data = token1PriceData[index];
+      return {
+        timestamp: token0Data.timestamp,
+        price: token0Data.value / (token1Data?.value || 1),
+        tokenSymbol0: currentPool.token0.symbol,
+        tokenSymbol1: currentPool.token1.symbol,
+      };
+    });
     return data;
+  }, [ currentPool, token0PriceData, token1PriceData, timeframe ]);
+
+  const totalEarnings = useMemo(() => {
+    if (!currentPool) return 0;
+    const startDate = new Date();
+    const params: FeeCalculationParams = {
+      volume: currentPool.poolDayDatas
+      .filter((d) => {
+        const date = new Date(d.date * 1000);
+        return date.getTime() >= startDate.getTime() - timeframe * 24 * 60 * 60 * 1000;
+      })
+      .reduce((acc, dayData) => acc + Number(dayData.volumeUSD), 0),
+      feeTier: Number(currentPool.feeTier),
+      liquidityAmount,
+      totalValueLocked: currentPool.totalValueLockedUSD,
+      currentPrice,
+      priceRangeMin,
+      priceRangeMax,
+      isFullRange,
+    };
+    const result = calculateEstimatedFees(params);
+    return result.estimatedFees;
   }, [
     currentPool,
     liquidityAmount,
-    timeframe,
-    token0PriceData,
-    token1PriceData,
-    currentPrice,
     priceRangeMin,
     priceRangeMax,
     isFullRange,
+    currentPrice,
+    timeframe,
   ]);
-
-  const totalEarnings = useMemo(() => {
-    if (correlationData.length === 0) return 0;
-    const actualDays = correlationData.length;
-    const totalActualEarnings = correlationData.reduce(
-      (sum, data) => sum + data.netEarnings,
-      0
-    );
-    const dailyAverageEarnings = totalActualEarnings / actualDays;
-    const monthlyEarnings = dailyAverageEarnings * 30;
-    return monthlyEarnings;
-  }, [correlationData]);
 
   const tokensDayDatas = useMemo(() => {
     if (
@@ -333,10 +270,6 @@ export const EstimateEarningsPage = () => {
     currentPool?.poolId || null,
     chainId ? Number(chainId) : null
   );
-  // const avgAPY = useMemo(() => {
-  //   const sum = correlationData.reduce((sum, data) => sum + data.apy, 0);
-  //   return sum / correlationData.length || 0;
-  // }, [correlationData]);
 
   useEffect(() => {
     if (
@@ -503,20 +436,6 @@ export const EstimateEarningsPage = () => {
     );
   }
 
-  // if (!currentPool) {
-  //   return (
-  //     <div className="min-h-80 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center rounded-2xl shadow-xl mb-8">
-  //       <div className="text-center">
-  //         <div className="text-6xl mb-4">🔍</div>
-  //         <h2 className="text-2xl font-bold text-white mb-2">Pool not found</h2>
-  //         <p className="text-gray-400">
-  //           The pool you are looking for does not exist or is not available on
-  //           this chain.
-  //         </p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
   if (!currentPool || !poolAddress || !chainId) {
     return <DefaultPreviewPage />;
   }

@@ -3,18 +3,19 @@ import {
   averageArray,
   findMax,
   findMin,
-  processPriceChartData,
 } from "../utils/math";
 import D3CorrelationChart from "./D3CorrelationChart";
 
+export type CorrelationDataInterface = Array<{
+    timestamp: number;
+    price: number;
+    tokenSymbol0: string;
+    tokenSymbol1: string;
+}>;
+
 // let d3Chart: D3CorrelationChart | null = null;
 export interface CorrelationChartProps {
-  token0PriceChart: {
-    prices: { timestamp: number; value: number }[];
-  } | null;
-  token1PriceChart: {
-    prices: { timestamp: number; value: number }[];
-  } | null;
+  data: CorrelationDataInterface;
   priceAssumptionValue: number;
   priceRangeValue: number[];
   isFullRange: boolean;
@@ -44,12 +45,11 @@ const CorrelationChart = ({ state }: { state: CorrelationChartProps }) => {
   const d3ChartRef = useRef<D3CorrelationChart | null>(null);
 
   useEffect(() => {
-    if (!state.token0PriceChart || !state.token1PriceChart) return;
-
-    const data = processPriceChartData(
-      state.token0PriceChart,
-      state.token1PriceChart
-    );
+    if (!state.data) return;
+    const data = state.data.map((d) => ({
+      x: d.timestamp,
+      y: d.price,
+    }));
     setData(data);
 
     let width = 500;
@@ -69,7 +69,7 @@ const CorrelationChart = ({ state }: { state: CorrelationChartProps }) => {
       mostActivePrice: state.priceAssumptionValue,
     });
     // eslint-disable-next-line
-  }, [refElement, state.token0PriceChart, state.token1PriceChart]);
+  }, [refElement, state.data]);
 
   useEffect(() => {
     if (!d3ChartRef.current) return;
@@ -97,7 +97,7 @@ const CorrelationChart = ({ state }: { state: CorrelationChartProps }) => {
     };
   }, []);
 
-  if (state.token0PriceChart === null || state.token1PriceChart === null) {
+  if (state.data === null ) {
     return <>...</>;
   }
 

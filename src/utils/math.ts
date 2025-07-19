@@ -30,39 +30,6 @@ export const divideArray = (data0: number[], data1: number[]): number[] => {
   return result;
 };
 
-export const processPriceChartData = (
-  token0PriceChart: {
-    prices: { timestamp: number; value: number }[];
-  } | null,
-  token1PriceChart: {
-    prices: { timestamp: number; value: number }[];
-  } | null
-): {
-  x: number;
-  y: number;
-}[] => {
-  if (token0PriceChart === null || token1PriceChart === null) {
-    return [];
-  }
-
-  const points: {
-    x: number;
-    y: number;
-  }[] = [];
-  const length = Math.min(
-    token0PriceChart.prices.length,
-    token1PriceChart.prices.length
-  );
-  for (let i = 0; i < length; ++i) {
-    points.push({
-      x: token0PriceChart.prices[i].timestamp,
-      y: token0PriceChart.prices[i].value / token1PriceChart.prices[i].value,
-    });
-  }
-
-  return points;
-};
-
 // export const groupPricePointsMinMaxByDay = (
 //   points: Point[]
 // ): { timestamp: number; min: number; max: number }[] => {

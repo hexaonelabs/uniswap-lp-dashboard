@@ -1,5 +1,5 @@
 import { BarChart3 } from "lucide-react";
-import CorrelationChart from "./CorrelationChart";
+import CorrelationChart, { CorrelationDataInterface } from "./CorrelationChart";
 
 export const ChartPanel = ({
   correlationData,
@@ -10,19 +10,7 @@ export const ChartPanel = ({
   token0,
   token1,
 }: {
-  correlationData: Array<{
-    timestamp: number;
-    date: string;
-    fees: number;
-    impermanentLoss: number;
-    netEarnings: number;
-    apy: number;
-    price0: number;
-    price1: number;
-    relativePrice: number; // Ajouter cette propriété
-    volume: number;
-    tvl: number;
-  }>;
+  correlationData: CorrelationDataInterface;
   currentPrice: number;
   priceRangeMin: number;
   priceRangeMax: number;
@@ -46,18 +34,7 @@ export const ChartPanel = ({
 
     <CorrelationChart
       state={{
-        token0PriceChart: {
-          prices: correlationData.map((data) => ({
-            timestamp: data.timestamp,
-            value: data.relativePrice, // Utiliser relativePrice au lieu de price0
-          })),
-        },
-        token1PriceChart: {
-          prices: correlationData.map((data) => ({
-            timestamp: data.timestamp,
-            value: 1, // Token1 est la référence (toujours 1 dans le ratio)
-          })),
-        },
+        data: correlationData,
         priceAssumptionValue: currentPrice,
         priceRangeValue: [priceRangeMin, priceRangeMax],
         isFullRange: isFullRange,

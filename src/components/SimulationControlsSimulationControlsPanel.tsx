@@ -105,7 +105,7 @@ export const SimulationControlsPanel = ({
               <input
                 type="range"
                 min="1"
-                max="30"
+                max="14"
                 value={timeframe}
                 onChange={(e) => setTimeframe(Number(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer 
@@ -132,20 +132,20 @@ export const SimulationControlsPanel = ({
                          [&::-moz-range-thumb]:border-none"
                 style={{
                   background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${
-                    ((timeframe - 1) / 29) * 100
-                  }%, #e5e7eb ${((timeframe - 1) / 29) * 100}%, #e5e7eb 100%)`,
+                    ((timeframe - 1) / 13.5) * 100
+                  }%, #e5e7eb ${((timeframe - 1) / 13.5) * 100}%, #e5e7eb 100%)`,
                 }}
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>1d</span>
-                <span>15d</span>
-                <span>30d</span>
+                <span>7d</span>
+                <span>14d</span>
               </div>
             </div>
 
             {/* Boutons de raccourci */}
             <div className="flex gap-2">
-              {[1, 7, 30].map((value) => (
+              {[1, 7, 14].map((value) => (
                 <button
                   key={value}
                   onClick={() => setTimeframe(value)}
