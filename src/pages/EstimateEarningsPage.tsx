@@ -16,7 +16,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { getPriceChart, QueryPeriodEnum } from "../services/coingecko";
-import { SimulationControlsPanel } from "../components/SimulationControlsSimulationControlsPanel";
+import { SimulationControlsPanel } from "../components/SimulationControls";
 import { ChartPanel } from "../components/ChartPanel";
 import { MetricsCard } from "../components/MetricsCard";
 import { VolumeChart } from "../components/positions/VolumeChart";
