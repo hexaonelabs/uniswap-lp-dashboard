@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import {
-  ExternalLink,
   // TrendingUp,
   // TrendingDown,
   AlertCircle,
@@ -9,7 +8,7 @@ import {
   Eye,
 } from "lucide-react";
 import { Position } from "../../types";
-import { Calculator as CalculatorModal } from "../Calculator";
+// import { Calculator as CalculatorModal } from "../Calculator";
 import { useNavigate } from "react-router-dom";
 import { TokenSymbolsGroup } from "../TokenSymbolsGroup";
 
@@ -18,19 +17,62 @@ interface PositionCardProps {
 }
 
 export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  // const [showCalculator, setShowCalculator] = useState(false);
   const navigate = useNavigate();
 
   // const formatPrice = (price: number) => {
   //   return price > 1 ? `$${price.toLocaleString()}` : `$${price.toFixed(6)}`;
   // };
+  const handleViewDetails = () => {
+    const serializablePosition = {
+      id: position.id,
+      token0: {
+        symbol: position.token0.symbol,
+        logoURI: position.token0.logoURI,
+        address: position.token0.address,
+        priceUSD: position.token0.priceUSD,
+      },
+      token1: {
+        symbol: position.token1.symbol,
+        logoURI: position.token1.logoURI,
+        address: position.token1.address,
+        priceUSD: position.token1.priceUSD,
+      },
+      chain: {
+        id: position.chain.id,
+        name: position.chain.name,
+        logoURI: position.chain.logoURI,
+      },
+      feeTier: position.feeTier,
+      totalValueUSD: position.totalValueUSD,
+      feesEarnedUSD: position.feesEarnedUSD,
+      apr: position.apr,
+      isOpen: position.isOpen,
+      isInRange: position.isInRange,
+      poolAddress: position.poolAddress,
+      currentPrice: position.currentPrice,
+      priceRange: position.priceRange,
+      token0BalancePercentage: position.token0BalancePercentage,
+      tokensOwed0: position.tokensOwed0,
+      tokensOwed1: position.tokensOwed1,
+      depositedToken0: position.depositedToken0,
+      depositedToken1: position.depositedToken1,
+      unClaimedFees: position.unClaimedFees,
+      createdAt: position.createdAt,
+      lastUpdated: position.lastUpdated,
+    };
+    navigate(`/positions/${position.id}`, {
+      state: { position: serializablePosition },
+    });
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -57,9 +99,11 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
       <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden">
         <div className="p-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div
+            className="flex items-center justify-between mb-8"
+            onClick={handleViewDetails}
+          >
             <div className="flex items-center space-x-3">
-
               {/* <div className="flex items-center space-x-2">
                 <img
                   src={position.token0.logoURI}
@@ -72,10 +116,12 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
                   className="w-10 h-10 rounded-full -ml-2"
                 />
               </div> */}
-              <TokenSymbolsGroup tokens={{
-                token0: position.token0,
-                token1: position.token1
-              }} />
+              <TokenSymbolsGroup
+                tokens={{
+                  token0: position.token0,
+                  token1: position.token1,
+                }}
+              />
               <div>
                 <h3 className="text-lg font-semibold text-gray-800">
                   {position.token0.symbol}/{position.token1.symbol}
@@ -116,9 +162,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
                 <span className="text-xs font-normal text-gray-500">
                   {" "}
                   {"("}$
-                  {position.unClaimedFees.amountUSD
-                    .toFixed(2)
-                    .toLocaleString()}{" "}
+                  {position.unClaimedFees.amountUSD.toFixed(2).toLocaleString()}{" "}
                   unclaimed{")"}
                 </span>
               </p>
@@ -165,16 +209,16 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
                   className="h-1 rounded-full bg-blue-500 "
                   style={{ width: `${position.token0BalancePercentage}%` }}
                 />
-                
+
                 {/* Current price indicator */}
-                <div 
+                <div
                   className="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-lg"
-                  style={{ 
-                    left: `${position.token0BalancePercentage}%` 
+                  style={{
+                    left: `${position.token0BalancePercentage}%`,
                   }}
                 />
               </div>
-              
+
               {/* Range labels */}
               {/* <div className="flex justify-between items-center mt-2">
                 <div className="flex flex-col items-start">
@@ -186,7 +230,7 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
                   <span className="text-sm font-normal text-purple-500">{position.priceRange.max}</span>
                 </div>
               </div> */}
-              
+
               {/* Current price label */}
               {/* <div 
                 className="absolute -top-8 transform -translate-x-1/2"
@@ -203,156 +247,86 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => {
-                  // Navigate to estimate page with searchParams from currrent position
-                  const url = `/estimate?chainId=${position.chain.id}&poolAddress=${position.poolAddress}&minPrice=${position.priceRange.min}&maxPrice=${position.priceRange.max}&liquidityAmount=${position.totalValueUSD.toFixed(2)}`;
-                  navigate(url);
-                }}
-                className="flex items-center space-x-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
-              >
-                <Calculator className="w-4 h-4" />
-                <span>Calculator</span>
-              </button>
-              <button
-                onClick={() => setShowDetails(!showDetails)}
-                className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-              >
-                <Eye className="w-4 h-4" />
-                <span>Details</span>
-              </button>
+          <div className="pt-6 border-t border-gray-200">
+            {/* Desktop layout */}
+            <div className="hidden md:flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Navigate to estimate page with searchParams from currrent position
+                    const url = `/estimate?chainId=${position.chain.id}&poolAddress=${position.poolAddress}&minPrice=${position.priceRange.min}&maxPrice=${position.priceRange.max}&liquidityAmount=${position.totalValueUSD.toFixed(2)}`;
+                    navigate(url);
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                >
+                  <Calculator className="w-4 h-4" />
+                  <span>Calculate</span>
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewDetails();
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>View Details</span>
+                </button>
+              </div>
+
+              {/* Date aligned right on desktop */}
+              <span className="text-xs text-gray-500">
+                Created: {formatDate(position.createdAt)}
+              </span>
             </div>
 
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <span>Created {formatDate(position.createdAt)}</span>
-              <button className="text-blue-600 hover:text-blue-800">
-                <ExternalLink className="w-4 h-4" />
-              </button>
+            {/* Mobile layout */}
+            <div className="md:hidden space-y-3">
+              {/* Buttons stacked on mobile */}
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Navigate to estimate page with searchParams from currrent position
+                    const url = `/estimate?chainId=${position.chain.id}&poolAddress=${position.poolAddress}&minPrice=${position.priceRange.min}&maxPrice=${position.priceRange.max}&liquidityAmount=${position.totalValueUSD.toFixed(2)}`;
+                    navigate(url);
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                >
+                  <Calculator className="w-4 h-4" />
+                  <span>Calculate</span>
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewDetails();
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>View Details</span>
+                </button>
+              </div>
+
+              {/* Date below buttons on mobile */}
+              <span className="text-xs text-gray-500 block">
+                Created: {formatDate(position.createdAt)}
+              </span>
             </div>
           </div>
-
-          {/* Expandable Details */}
-          {showDetails && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">Pool Address</p>
-                  <p className="font-mono text-xs text-gray-800">
-                    {position.poolAddress}
-                  </p>
-                </div>
-                <div></div>
-                <div>
-                  <p className="text-gray-500">Position ID</p>
-                  <p className="font-mono text-xs text-gray-800">
-                    {position.id}
-                  </p>
-                </div>
-                <div></div>
-                <div>
-                  <p className="text-gray-500">Tokens LP</p>
-                  <p className="font-mono text-xs text-gray-800">
-                    {position.token0.symbol} / {position.token1.symbol}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Last Updated</p>
-                  <p className="text-gray-800">
-                    {new Date(position.lastUpdated).toLocaleDateString()}{" "}
-                    {new Date(position.lastUpdated).toLocaleTimeString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Initial Deposit Liquidity</p>
-                  <p className="font-mono text-xs text-gray-800">
-                    {position.depositedToken0} {position.token0.symbol} /{" "}
-                    {position.depositedToken1} {position.token1.symbol}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Initial Deposit USD</p>
-                  <p className="font-mono text-xs text-gray-800">
-                    $
-                    {(
-                      parseFloat(position.depositedToken0) *
-                        position.token0.priceUSD +
-                      parseFloat(position.depositedToken1) *
-                        position.token1.priceUSD
-                    ).toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Current Liquidity</p>
-                  <p className="font-mono text-xs text-gray-800">
-                    {position.tokensOwed0} {position.token0.symbol} /{" "}
-                    {position.tokensOwed1} {position.token1.symbol}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Current USD</p>
-                  <p className="font-mono text-xs text-gray-800">
-                    ${position.totalValueUSD.toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Price Range</p>
-                  <p className="text-gray-800">
-                    {position.priceRange.min} to {position.priceRange.max}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Total fees earned USD</p>
-                  <p className="text-gray-800">
-                    ${(position.feesEarnedUSD).toFixed(2)}
-                    <span className="text-xs text-gray-500">
-                      {" ("}
-                      ${(position.feesEarnedUSD - position.unClaimedFees.amountUSD).toFixed(2)} claimed + 
-                      ${position.unClaimedFees.amountUSD.toFixed(2)} unclaimed
-                      {")"}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Current Price</p>
-                  <p className="text-gray-800">
-                    {position.currentPrice.toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">APR</p>
-                  <p className="text-gray-800">
-                    {position.apr.toFixed(2)}%
-                    <span className="text-xs text-gray-500">
-                      {" (24h projection: "}
-                      ${((position.feesEarnedUSD * position.apr) / 365).toFixed(2)}
-                      {")"}
-                    </span>
-                  </p>
-                </div>
-              </div>
-              {/* <div className="grid grid-cols-2 gap-4 text-sm mt-12">
-                <div>
-                  <p className="text-gray-500">Pool Liquidity</p>
-                  <p className="text-gray-800">
-                    {parseInt(position.liquidity).toLocaleString()}
-                  </p>
-                </div>
-
-              </div> */}
-            </div>
-          )}
         </div>
       </div>
 
       {/* Calculator Modal */}
-      {showCalculator && (
+      {/* {showCalculator && (
         <CalculatorModal
           position={position}
           onClose={() => setShowCalculator(false)}
         />
-      )}
+      )} */}
     </>
   );
 };
