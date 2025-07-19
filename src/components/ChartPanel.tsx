@@ -40,18 +40,6 @@ export const ChartPanel = ({
         isFullRange: isFullRange,
         token0: token0,
         token1: token1,
-        pool: {
-          token0: {
-            symbol: token0.symbol,
-            decimals: token0.decimals,
-            priceUSD: currentPrice, // Utiliser le prix actuel pour le token0
-          },
-          token1: {
-            symbol: token1.symbol,
-            decimals: token1.decimals,
-            priceUSD: 1, // Token1 est la référence (toujours 1 dans le ratio)
-          },
-        },
       }}
     />
   </div>
