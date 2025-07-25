@@ -29,6 +29,7 @@ import { Position } from "../types";
 import { TokenSymbolsGroup } from "../components/TokenSymbolsGroup";
 import { usePositions } from "../hooks/usePositions";
 import { NETWORKS } from "../services/fetcher";
+import ClaimFeesButton from "../components/ClaimFeesButton";
 
 interface ToastNotification {
   id: string;
@@ -261,6 +262,9 @@ export const PositionDetailsPage: React.FC = () => {
 
                 {/* Action buttons */}
                 <div className="flex gap-3">
+
+                  <ClaimFeesButton positionId={position.id} chainId={position.chain.id} />
+
                   <button
                     onClick={() => setShowSensitiveData(!showSensitiveData)}
                     className="flex items-center gap-2 p-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors duration-200"

@@ -11,6 +11,7 @@ import { Position } from "../../types";
 // import { Calculator as CalculatorModal } from "../Calculator";
 import { useNavigate } from "react-router-dom";
 import { TokenSymbolsGroup } from "../TokenSymbolsGroup";
+import ClaimFeesButton from "../ClaimFeesButton";
 
 interface PositionCardProps {
   position: Position;
@@ -250,12 +251,17 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
           <div className="pt-6 border-t border-gray-200">
             {/* Desktop layout */}
             <div className="hidden md:flex items-center justify-between">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Navigate to estimate page with searchParams from currrent position
-                    const url = `/estimate?chainId=${position.chain.id}&poolAddress=${position.poolAddress}&minPrice=${position.priceRange.min}&maxPrice=${position.priceRange.max}&liquidityAmount=${position.totalValueUSD.toFixed(2)}`;
+                    const url = `/estimate?chainId=${
+                      position.chain.id
+                    }&poolAddress=${position.poolAddress}&minPrice=${
+                      position.priceRange.min
+                    }&maxPrice=${
+                      position.priceRange.max
+                    }&liquidityAmount=${position.totalValueUSD.toFixed(2)}`;
                     navigate(url);
                   }}
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
@@ -272,31 +278,40 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
                   className="flex items-center space-x-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
                 >
                   <Eye className="w-4 h-4" />
-                  <span>View Details</span>
+                  <span>Details</span>
                 </button>
+
+                <ClaimFeesButton
+                  positionId={position.id}
+                  chainId={position.chain.id}
+                />
               </div>
 
-              {/* Date aligned right on desktop */}
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 pl-4 ">
                 Created: {formatDate(position.createdAt)}
               </span>
             </div>
 
             {/* Mobile layout */}
             <div className="md:hidden space-y-3">
-              {/* Buttons stacked on mobile */}
-              <div className="flex items-center space-x-3">
+              {/* Buttons grid on mobile */}
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Navigate to estimate page with searchParams from currrent position
-                    const url = `/estimate?chainId=${position.chain.id}&poolAddress=${position.poolAddress}&minPrice=${position.priceRange.min}&maxPrice=${position.priceRange.max}&liquidityAmount=${position.totalValueUSD.toFixed(2)}`;
+                    const url = `/estimate?chainId=${
+                      position.chain.id
+                    }&poolAddress=${position.poolAddress}&minPrice=${
+                      position.priceRange.min
+                    }&maxPrice=${
+                      position.priceRange.max
+                    }&liquidityAmount=${position.totalValueUSD.toFixed(2)}`;
                     navigate(url);
                   }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                  className="flex items-center justify-center space-x-1 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
                 >
                   <Calculator className="w-4 h-4" />
-                  <span>Calculate</span>
+                  <span className="hidden xs:inline">Calculate</span>
                 </button>
 
                 <button
@@ -304,15 +319,21 @@ export const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
                     e.stopPropagation();
                     handleViewDetails();
                   }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+                  className="flex items-center justify-center space-x-1 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
                 >
                   <Eye className="w-4 h-4" />
-                  <span>View Details</span>
+                  <span className="hidden xs:inline">View</span>
                 </button>
+
+                <div className="flex justify-center">
+                  <ClaimFeesButton
+                    positionId={position.id}
+                    chainId={position.chain.id}
+                  />
+                </div>
               </div>
 
-              {/* Date below buttons on mobile */}
-              <span className="text-xs text-gray-500 block">
+              <span className="text-xs text-gray-500 block text-center">
                 Created: {formatDate(position.createdAt)}
               </span>
             </div>

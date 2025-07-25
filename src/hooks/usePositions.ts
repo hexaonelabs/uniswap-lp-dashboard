@@ -1,15 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Position } from '../types';
 import { getPositionsData } from '../data/data';
 import { mockPositions } from '../data/mockData';
 import { NETWORKS } from '../services/fetcher';
 
-const cache = new Map<string, Position[]>();
+export const cache = new Map<string, Position[]>();
 
 export const usePositions = (address?: string) => {
   const [positions, setPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const refreshPositions = useCallback(() => {
+    if (!address) return;
+    
+    console.log('Refreshing positions for address:', address);
+    const cacheKey = `positions-${address}`;
+    cache.delete(cacheKey); // Supprimer du cache
+    
+    setLoading(true);
+    setError(null);
+    
+    // Recharger les données
+    Promise.all([
+      getPositionsData(address, NETWORKS[0].id),
+      getPositionsData(address, NETWORKS[1].id),
+    ])
+    .then((datas) => {
+      const allPositions = datas.flat();
+      setPositions(allPositions);
+      cache.set(cacheKey, allPositions);
+    })
+    .catch(error => {
+      console.error('Error refreshing positions:', error);
+      setError(error.message);
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+  }, [address]);
 
   useEffect(() => {
     console.log('usePositions called with address:', address);
@@ -62,5 +91,14 @@ export const usePositions = (address?: string) => {
     });
   }, [address]);
 
-  return { positions, loading, error };
+  useEffect(() => {
+    const handlePositionsUpdate = () => {
+      refreshPositions();
+    };
+    
+    window.addEventListener('positions-updated', handlePositionsUpdate);
+    return () => window.removeEventListener('positions-updated', handlePositionsUpdate);
+  }, [refreshPositions]);
+
+  return { positions, loading, error, refreshPositions };
 };
