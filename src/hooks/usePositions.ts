@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Position } from '../types';
-import { getPositionsData } from '../data/data';
+import { getPositionData, getPositionsData } from '../data/data';
 import { mockPositions } from '../data/mockData';
 import { NETWORKS } from '../services/fetcher';
 
 export const cache = new Map<string, Position[]>();
 
-export const usePositions = (address?: string) => {
+export const usePositions = (address?: string, chainId?: string, positionId?: string) => {
   const [positions, setPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +41,39 @@ export const usePositions = (address?: string) => {
   }, [address]);
 
   useEffect(() => {
-    console.log('usePositions called with address:', address);
-    if (!address) {
+    console.log('usePositions called with address:', address, 'chainId:', chainId, 'positionId:', positionId);
+    if (!address && (!chainId && !positionId)) {
       setLoading(false);
       setPositions([]);
       setError(null);
       return;
     }
 
+    if (!address && chainId && positionId) {
+      setLoading(true);
+      setError(null);
+      getPositionData(chainId, positionId)
+      .then(data => {
+        setPositions(data);
+        setError(null);
+      })
+      .catch(error => {
+        console.error('Error fetching position by ID:', error);
+        setError(error.message);
+        setPositions([]); // Fallback to mock data
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+      return;
+    }
+
+    if (!address) {
+      setLoading(false);
+      setPositions([]);
+      setError(null);
+      return;
+    }
     
     const cacheKey = `positions-${address}`;
     const cachedData = cache.get(cacheKey);
@@ -89,7 +114,7 @@ export const usePositions = (address?: string) => {
     .finally(() => {
       setLoading(false);
     });
-  }, [address]);
+  }, [address, chainId, positionId]);
 
   useEffect(() => {
     const handlePositionsUpdate = () => {

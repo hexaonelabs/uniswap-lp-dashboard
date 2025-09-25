@@ -1,5 +1,5 @@
 import { fetcher, GetPositionsAPIResponse, NETWORKS, PositionAPIResponse } from "../services/fetcher"
-import { getPositions } from "../services/querys"
+import { getPosition, getPositions } from "../services/querys"
 import { Position } from "../types";
 import nonfungiblePositionManagerAbi from "@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json";
 import { Pool as V3Pool, Position as V3Position } from "@uniswap/v3-sdk";
@@ -26,6 +26,16 @@ export const getPositionsData = async (owner: string, chainId: number = chains.a
   const response = fetcher<GetPositionsAPIResponse>(getPositions(owner), chainId);
   const data = await response;
   return _formatPositions(data.data.positions, chainId);
+}
+
+export const getPositionData = async (chainId: string, positionId: string) => {
+  const response = await fetcher<{
+    data: {
+      position: PositionAPIResponse
+    }
+  }>(getPosition(positionId), Number(chainId));
+  console.log('Response from getPositionData:', response);
+  return _formatPositions([response.data.position], Number(chainId));
 }
 
 const _formatPositions = async (positions: PositionAPIResponse[], chainId: number):Promise<Position[]> => {
@@ -241,7 +251,8 @@ const calculateUnclaimedFees = async (
       amount1Max: MAX_UINT128,
     }],
     account: position.owner as `0x${string}`, // le propriétaire du NFT
-  }).catch((error) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }).catch((error: any) => {
     console.error(`Error in collect simulation on chain ${client.chain.id}:`, error);
     return { result: [BigNumber.from(0), BigNumber.from(0)] };
   });

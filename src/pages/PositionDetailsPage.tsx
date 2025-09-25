@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ExternalLink,
@@ -42,11 +42,14 @@ export const PositionDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [position, setPosition] = useState<Position | null>(
     location.state?.position || null
   );
   const { positions } = usePositions(
-    localStorage.getItem("evmAddress") || undefined
+    searchParams.get('chainId') ? undefined : localStorage.getItem("evmAddress") || undefined,
+    searchParams.get('chainId') || undefined,
+    id || undefined
   );
   const [isLoading, setIsLoading] = useState(!position);
   const [showSensitiveData, setShowSensitiveData] = useState(true);

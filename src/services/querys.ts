@@ -34,6 +34,16 @@ export const getPosition = (id: string) => `
     amountCollectedUSD
     amountWithdrawnUSD
     amountDepositedUSD
+
+    pool {
+      id
+      feeTier
+      liquidity
+      tick
+      sqrtPrice
+      feeGrowthGlobal0X128
+      feeGrowthGlobal1X128
+    }
   }
 }
 `;
