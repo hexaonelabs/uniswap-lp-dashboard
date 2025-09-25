@@ -87,8 +87,8 @@ export const NETWORKS: Network[] = [
     ],
     nonfungiblePositionManagerAddress: '0xC36442b4a4522E871399CD717aBDD847Ab11FE88',
     factory: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-    totalValueLockedUSD_gte: 10_000,
-    volumeUSD_gte: 5_000,
+    totalValueLockedUSD_gte: 50_000,
+    volumeUSD_gte: 10_000,
   },
     {
     ...base,
@@ -103,8 +103,8 @@ export const NETWORKS: Network[] = [
     ],
     nonfungiblePositionManagerAddress: '0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1',
     factory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
-    totalValueLockedUSD_gte: 10_000,
-    volumeUSD_gte: 5_000,
+    totalValueLockedUSD_gte: 50_000,
+    volumeUSD_gte: 10_000,
   },
 ];
 
@@ -177,8 +177,12 @@ const _queryUniswap = async <T>(query: string, chainId: number): Promise<T> => {
     throw new Error(`Failed to fetch data for chain ${chainId}`);
   }
   // Cache the response
-  localStorage.setItem(key, JSON.stringify(res));
-  localStorage.setItem(`${key}-time`, Date.now().toString());
+  try {
+    localStorage.setItem(key, JSON.stringify(res));
+    localStorage.setItem(`${key}-time`, Date.now().toString());
+  } catch (error) {
+    console.error('Error parsing cached response:', error);
+  }
   return res as T;
 };
 
